@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Layout } from '@/components/Layout';
+import { MainLayout } from '@/components/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, ShoppingCart, Package, AlertTriangle, TrendingUp, Calculator, LogOut } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Calculator, Users, ShoppingCart, Package, AlertTriangle, TrendingUp, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface DashboardStats {
@@ -48,14 +49,14 @@ export default function Dashboard() {
 
       // Total productos
       const { count: productosCount } = await supabase
-        .from('productos')
+        .from('inventario')
         .select('*', { count: 'exact', head: true });
 
       // Productos con bajo stock
       const { count: bajoStockCount } = await supabase
-        .from('productos')
+        .from('inventario')
         .select('*', { count: 'exact', head: true })
-        .filter('cantidad_disponible', 'lte', 'stock_minimo_alerta');
+        .filter('cantidad_disponible', 'lte', 'stock_minimo');
 
       setStats({
         totalClientes: clientesCount || 0,
@@ -79,7 +80,7 @@ export default function Dashboard() {
   };
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-muted/30">
         {/* Header */}
         <div className="bg-card border-b">
@@ -89,8 +90,8 @@ export default function Dashboard() {
                 <Calculator className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-primary">ContApp</h1>
-                <p className="text-sm text-muted-foreground">Panel de Control</p>
+                <h1 className="text-2xl font-bold text-primary">ContaSimple</h1>
+                <p className="text-sm text-muted-foreground">Gestión Contable Inteligente</p>
               </div>
             </div>
             <Button variant="outline" onClick={handleSignOut}>
@@ -234,6 +235,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   );
 }

@@ -52,7 +52,7 @@ export default function Inventario() {
   const loadProductos = async () => {
     try {
       const { data, error } = await supabase
-        .from('productos')
+        .from('inventario')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -154,10 +154,10 @@ export default function Inventario() {
     if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
     
     try {
-      const { error } = await supabase
-        .from('productos')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabase
+      .from('inventario')
+      .delete()
+      .eq('id', id);
       
       if (error) throw error;
       

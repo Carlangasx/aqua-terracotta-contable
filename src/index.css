@@ -8,51 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 180 20% 97%;
-    --foreground: 180 15% 15%;
+    /* Verde menta #E6F4EA base */
+    --background: 130 30% 96%;
+    --foreground: 0 0% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 180 15% 15%;
+    --card-foreground: 0 0% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 180 15% 15%;
+    --popover-foreground: 0 0% 20%;
 
-    --primary: 180 35% 55%;
+    /* Verde menta como primary */
+    --primary: 130 25% 70%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 25 45% 85%;
-    --secondary-foreground: 25 15% 25%;
+    /* Terracota suave #FBE3D2 como secondary */
+    --secondary: 25 50% 90%;
+    --secondary-foreground: 25 30% 30%;
 
-    --muted: 180 15% 95%;
-    --muted-foreground: 180 10% 45%;
+    /* Gris claro #F4F4F4 como muted */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 25 45% 85%;
-    --accent-foreground: 25 15% 25%;
+    /* Terracota como accent */
+    --accent: 25 50% 85%;
+    --accent-foreground: 25 30% 30%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 180 15% 90%;
-    --input: 180 15% 95%;
-    --ring: 180 35% 55%;
+    --border: 130 15% 88%;
+    --input: 130 20% 94%;
+    --ring: 130 25% 70%;
 
     --radius: 0.5rem;
 
+    /* Sidebar con la paleta nueva */
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 130 25% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 50% 90%;
+    --sidebar-accent-foreground: 25 30% 30%;
+    --sidebar-border: 130 15% 88%;
+    --sidebar-ring: 130 25% 70%;
   }
 
   .dark {
