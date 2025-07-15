@@ -323,6 +323,7 @@ export type Database = {
           cliente_id: string
           created_at: string
           estado: Database["public"]["Enums"]["estado_venta"] | null
+          factura_pdf_url: string | null
           fecha: string
           id: string
           iva: number | null
@@ -337,6 +338,7 @@ export type Database = {
           cliente_id: string
           created_at?: string
           estado?: Database["public"]["Enums"]["estado_venta"] | null
+          factura_pdf_url?: string | null
           fecha?: string
           id?: string
           iva?: number | null
@@ -351,6 +353,7 @@ export type Database = {
           cliente_id?: string
           created_at?: string
           estado?: Database["public"]["Enums"]["estado_venta"] | null
+          factura_pdf_url?: string | null
           fecha?: string
           id?: string
           iva?: number | null

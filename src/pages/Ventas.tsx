@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Edit, Trash2, ArrowLeft, ShoppingCart, Minus } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ArrowLeft, ShoppingCart, Minus, Download, FileText } from 'lucide-react';
 
 interface Cliente {
   id: string;
@@ -197,7 +197,7 @@ export default function Ventas() {
       return;
     }
 
-    const { subtotal, impuestos, total } = calcularTotales();
+  const { subtotal, impuestos, total } = calcularTotales();
     
     try {
       const ventaData = {
@@ -275,7 +275,41 @@ export default function Ventas() {
     }
   };
 
-  const { subtotal, impuestos, total } = calcularTotales();
+  const handleGeneratePDF = async (ventaId: string) => {
+    try {
+      console.log('Generating PDF for venta:', ventaId);
+      
+      const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { ventaId }
+      });
+
+      if (error) {
+        console.error('Error generating PDF:', error);
+        throw error;
+      }
+
+      // Open the HTML in a new window for now
+      // In the future, this could be converted to an actual PDF download
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(data);
+        newWindow.document.close();
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Factura generada correctamente",
+      });
+
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Error al generar la factura PDF",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -432,24 +466,27 @@ export default function Ventas() {
                   </div>
 
                   {/* Resumen */}
-                  {productosVenta.length > 0 && (
-                    <Card className="p-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span>Subtotal:</span>
-                          <span className="font-mono">${subtotal.toFixed(2)}</span>
+                  {productosVenta.length > 0 && (() => {
+                    const { subtotal, impuestos, total } = calcularTotales();
+                    return (
+                      <Card className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span className="font-mono">${subtotal.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>IVA (16%):</span>
+                            <span className="font-mono">${impuestos.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-lg font-bold">
+                            <span>Total:</span>
+                            <span className="font-mono">${total.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span>IVA (16%):</span>
-                          <span className="font-mono">${impuestos.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-lg font-bold">
-                          <span>Total:</span>
-                          <span className="font-mono">${total.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </Card>
-                  )}
+                      </Card>
+                    );
+                  })()}
                   
                   <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -545,6 +582,14 @@ export default function Ventas() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleGeneratePDF(venta.id)}
+                                title="Descargar factura PDF"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
