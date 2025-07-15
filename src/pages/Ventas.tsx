@@ -15,14 +15,14 @@ import { Plus, Search, Edit, Trash2, ArrowLeft, ShoppingCart, Minus } from 'luci
 
 interface Cliente {
   id: string;
-  empresa_nombre: string;
+  nombre_empresa: string;
   rif: string;
   direccion_fiscal: string;
 }
 
 interface Producto {
   id: string;
-  nombre: string;
+  nombre_producto: string;
   precio_unitario: number;
   cantidad_disponible: number;
 }
@@ -41,11 +41,11 @@ interface Venta {
   fecha: string;
   productos: any;
   subtotal: number;
-  impuestos: number;
+  iva: number;
   total: number;
   created_at: string;
   clientes?: {
-    empresa_nombre: string;
+    nombre_empresa: string;
     rif: string;
   };
 }
@@ -79,7 +79,7 @@ export default function Ventas() {
         .select(`
           *,
           clientes (
-            empresa_nombre,
+            nombre_empresa,
             rif
           )
         `)
@@ -103,8 +103,8 @@ export default function Ventas() {
     try {
       const { data, error } = await supabase
         .from('clientes')
-        .select('id, empresa_nombre, rif, direccion_fiscal')
-        .order('empresa_nombre');
+        .select('id, nombre_empresa, rif, direccion_fiscal')
+        .order('nombre_empresa');
 
       if (error) throw error;
       setClientes(data || []);
@@ -116,9 +116,9 @@ export default function Ventas() {
   const loadProductos = async () => {
     try {
       const { data, error } = await supabase
-        .from('productos')
-        .select('id, nombre, precio_unitario, cantidad_disponible')
-        .order('nombre');
+        .from('inventario')
+        .select('id, nombre_producto, precio_unitario, cantidad_disponible')
+        .order('nombre_producto');
 
       if (error) throw error;
       setProductos(data || []);
@@ -128,7 +128,7 @@ export default function Ventas() {
   };
 
   const filteredVentas = ventas.filter(venta =>
-    venta.clientes?.empresa_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    venta.clientes?.nombre_empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
     venta.clientes?.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
     venta.fecha.includes(searchTerm)
   );
@@ -164,10 +164,10 @@ export default function Ventas() {
     newProductos[index] = { ...newProductos[index], [field]: value };
     
     if (field === 'producto') {
-      const selectedProducto = productos.find(p => p.nombre === value);
+      const selectedProducto = productos.find(p => p.nombre_producto === value);
       if (selectedProducto) {
         newProductos[index].precio_unitario = selectedProducto.precio_unitario;
-        newProductos[index].descripcion = selectedProducto.nombre;
+        newProductos[index].descripcion = selectedProducto.nombre_producto;
       }
     }
     
@@ -206,7 +206,7 @@ export default function Ventas() {
         fecha,
         productos: productosVenta as any,
         subtotal,
-        impuestos,
+        iva: impuestos,
         total,
       };
 
@@ -329,7 +329,7 @@ export default function Ventas() {
                         <SelectContent>
                           {clientes.map((cliente) => (
                             <SelectItem key={cliente.id} value={cliente.id}>
-                              {cliente.empresa_nombre} - {cliente.rif}
+                              {cliente.nombre_empresa} - {cliente.rif}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -378,8 +378,8 @@ export default function Ventas() {
                                   </SelectTrigger>
                                   <SelectContent>
                                     {productos.map((producto) => (
-                                      <SelectItem key={producto.id} value={producto.nombre}>
-                                        {producto.nombre} - ${producto.precio_unitario}
+                                      <SelectItem key={producto.id} value={producto.nombre_producto}>
+                                        {producto.nombre_producto} - ${producto.precio_unitario}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -525,7 +525,7 @@ export default function Ventas() {
                           </TableCell>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{venta.clientes?.empresa_nombre}</div>
+                              <div className="font-medium">{venta.clientes?.nombre_empresa}</div>
                               <div className="text-sm text-muted-foreground">{venta.clientes?.rif}</div>
                             </div>
                           </TableCell>
@@ -538,7 +538,7 @@ export default function Ventas() {
                             <span className="font-mono">${venta.subtotal.toFixed(2)}</span>
                           </TableCell>
                           <TableCell>
-                            <span className="font-mono">${venta.impuestos.toFixed(2)}</span>
+                            <span className="font-mono">${venta.iva.toFixed(2)}</span>
                           </TableCell>
                           <TableCell>
                             <span className="font-mono font-bold">${venta.total.toFixed(2)}</span>

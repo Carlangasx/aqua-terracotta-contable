@@ -15,13 +15,13 @@ import { Plus, Search, Edit, Trash2, ArrowLeft, Package, AlertTriangle } from 'l
 
 interface Producto {
   id: string;
-  nombre: string;
+  nombre_producto: string;
   sku: string;
   categoria: string;
   descripcion: string;
   cantidad_disponible: number;
   precio_unitario: number;
-  stock_minimo_alerta: number;
+  stock_minimo: number;
   created_at: string;
 }
 
@@ -40,7 +40,7 @@ export default function Inventario() {
     descripcion: '',
     cantidad_disponible: 0,
     precio_unitario: 0,
-    stock_minimo_alerta: 0,
+    stock_minimo: 0,
   });
 
   useEffect(() => {
@@ -71,9 +71,9 @@ export default function Inventario() {
   };
 
   const filteredProductos = productos.filter(producto =>
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+    producto.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    producto.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    producto.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const resetForm = () => {
@@ -84,7 +84,7 @@ export default function Inventario() {
       descripcion: '',
       cantidad_disponible: 0,
       precio_unitario: 0,
-      stock_minimo_alerta: 0,
+      stock_minimo: 0,
     });
     setEditingProducto(null);
   };
@@ -96,13 +96,13 @@ export default function Inventario() {
 
   const openEditDialog = (producto: Producto) => {
     setFormData({
-      nombre: producto.nombre,
+      nombre: producto.nombre_producto,
       sku: producto.sku || '',
       categoria: producto.categoria || '',
       descripcion: producto.descripcion || '',
       cantidad_disponible: producto.cantidad_disponible,
       precio_unitario: producto.precio_unitario,
-      stock_minimo_alerta: producto.stock_minimo_alerta,
+      stock_minimo: producto.stock_minimo,
     });
     setEditingProducto(producto);
     setIsDialogOpen(true);
@@ -114,8 +114,17 @@ export default function Inventario() {
     try {
       if (editingProducto) {
         const { error } = await supabase
-          .from('productos')
-          .update({ ...formData, user_id: user?.id })
+          .from('inventario')
+          .update({ 
+            nombre_producto: formData.nombre,
+            sku: formData.sku,
+            categoria: formData.categoria,
+            descripcion: formData.descripcion,
+            cantidad_disponible: formData.cantidad_disponible,
+            precio_unitario: formData.precio_unitario,
+            stock_minimo: formData.stock_minimo,
+            user_id: user?.id 
+          })
           .eq('id', editingProducto.id);
         
         if (error) throw error;
@@ -126,8 +135,17 @@ export default function Inventario() {
         });
       } else {
         const { error } = await supabase
-          .from('productos')
-          .insert([{ ...formData, user_id: user?.id }]);
+          .from('inventario')
+          .insert([{ 
+            nombre_producto: formData.nombre,
+            sku: formData.sku,
+            categoria: formData.categoria,
+            descripcion: formData.descripcion,
+            cantidad_disponible: formData.cantidad_disponible,
+            precio_unitario: formData.precio_unitario,
+            stock_minimo: formData.stock_minimo,
+            user_id: user?.id 
+          }]);
         
         if (error) throw error;
         
@@ -178,7 +196,7 @@ export default function Inventario() {
   };
 
   const isLowStock = (producto: Producto) => {
-    return producto.cantidad_disponible <= producto.stock_minimo_alerta;
+    return producto.cantidad_disponible <= producto.stock_minimo;
   };
 
   if (!user) {
@@ -277,16 +295,16 @@ export default function Inventario() {
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="stock_minimo_alerta">Stock Mínimo (Alerta)</Label>
-                      <Input
-                        id="stock_minimo_alerta"
-                        type="number"
-                        min="0"
-                        value={formData.stock_minimo_alerta}
-                        onChange={(e) => setFormData({ ...formData, stock_minimo_alerta: parseInt(e.target.value) || 0 })}
-                      />
-                    </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="stock_minimo">Stock Mínimo (Alerta)</Label>
+                       <Input
+                         id="stock_minimo"
+                         type="number"
+                         min="0"
+                         value={formData.stock_minimo}
+                         onChange={(e) => setFormData({ ...formData, stock_minimo: parseInt(e.target.value) || 0 })}
+                       />
+                     </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -370,7 +388,7 @@ export default function Inventario() {
                         <TableRow key={producto.id}>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{producto.nombre}</div>
+                              <div className="font-medium">{producto.nombre_producto}</div>
                               {producto.descripcion && (
                                 <div className="text-sm text-muted-foreground">
                                   {producto.descripcion}
@@ -400,9 +418,9 @@ export default function Inventario() {
                               <span className={`font-medium ${isLowStock(producto) ? 'text-destructive' : ''}`}>
                                 {producto.cantidad_disponible} unidades
                               </span>
-                              <span className="text-xs text-muted-foreground">
-                                Mín: {producto.stock_minimo_alerta}
-                              </span>
+                               <span className="text-xs text-muted-foreground">
+                                Mín: {producto.stock_minimo}
+                               </span>
                             </div>
                           </TableCell>
                           <TableCell>
