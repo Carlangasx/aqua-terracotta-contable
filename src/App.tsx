@@ -11,6 +11,8 @@ import Ventas from "./pages/Ventas";
 import Inventario from "./pages/Inventario";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import CuentasPorPagar from "./pages/CuentasPorPagar";
+import ConciliacionBancaria from "./pages/ConciliacionBancaria";
+import CuentasBancarias from "./pages/CuentasBancarias";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />
             <Route path="/cuentas-pagar" element={<CuentasPorPagar />} />
+            <Route path="/cuentas-bancarias" element={<CuentasBancarias />} />
+            <Route path="/bancos/conciliacion" element={<ConciliacionBancaria />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

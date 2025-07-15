@@ -62,6 +62,63 @@ export type Database = {
         }
         Relationships: []
       }
+      conciliaciones: {
+        Row: {
+          conciliado: boolean
+          created_at: string
+          cuenta_bancaria_id: string | null
+          fecha: string
+          id: string
+          monto: number
+          movimiento_id: string | null
+          observaciones: string | null
+          referencia_bancaria: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conciliado?: boolean
+          created_at?: string
+          cuenta_bancaria_id?: string | null
+          fecha: string
+          id?: string
+          monto?: number
+          movimiento_id?: string | null
+          observaciones?: string | null
+          referencia_bancaria?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conciliado?: boolean
+          created_at?: string
+          cuenta_bancaria_id?: string | null
+          fecha?: string
+          id?: string
+          monto?: number
+          movimiento_id?: string | null
+          observaciones?: string | null
+          referencia_bancaria?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conciliaciones_cuenta_bancaria_id_fkey"
+            columns: ["cuenta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conciliaciones_movimiento_id_fkey"
+            columns: ["movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "pagos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cuentas_bancarias: {
         Row: {
           activa: boolean
