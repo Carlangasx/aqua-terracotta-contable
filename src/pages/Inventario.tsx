@@ -57,7 +57,7 @@ export default function Inventario() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
   const [formData, setFormData] = useState({
@@ -104,7 +104,7 @@ export default function Inventario() {
       producto.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       producto.categoria?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = !categoryFilter || producto.categoria === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || producto.categoria === categoryFilter;
     
     return matchesSearch && matchesCategory;
   });
@@ -429,7 +429,7 @@ export default function Inventario() {
                       <SelectValue placeholder="Todas las categorías" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas las categorías</SelectItem>
+                      <SelectItem value="all">Todas las categorías</SelectItem>
                       {CATEGORIAS_IMPRENTA.map((categoria) => (
                         <SelectItem key={categoria} value={categoria}>
                           {categoria}
