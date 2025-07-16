@@ -266,6 +266,65 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos_generados: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          estado: string | null
+          extras: Json | null
+          fecha_emision: string | null
+          id: number
+          numero_documento: string
+          observaciones: string | null
+          productos: Json | null
+          tipo_documento: string
+          total: number | null
+          updated_at: string | null
+          url_pdf: string | null
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string | null
+          estado?: string | null
+          extras?: Json | null
+          fecha_emision?: string | null
+          id?: number
+          numero_documento: string
+          observaciones?: string | null
+          productos?: Json | null
+          tipo_documento: string
+          total?: number | null
+          updated_at?: string | null
+          url_pdf?: string | null
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string | null
+          estado?: string | null
+          extras?: Json | null
+          fecha_emision?: string | null
+          id?: number
+          numero_documento?: string
+          observaciones?: string | null
+          productos?: Json | null
+          tipo_documento?: string
+          total?: number | null
+          updated_at?: string | null
+          url_pdf?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_generados_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventario: {
         Row: {
           cantidad_disponible: number | null
@@ -277,6 +336,8 @@ export type Database = {
           precio_unitario: number
           sku: string | null
           stock_minimo: number | null
+          tipo: string | null
+          unidad_medida: string | null
           updated_at: string
           user_id: string
         }
@@ -290,6 +351,8 @@ export type Database = {
           precio_unitario?: number
           sku?: string | null
           stock_minimo?: number | null
+          tipo?: string | null
+          unidad_medida?: string | null
           updated_at?: string
           user_id: string
         }
@@ -303,6 +366,8 @@ export type Database = {
           precio_unitario?: number
           sku?: string | null
           stock_minimo?: number | null
+          tipo?: string | null
+          unidad_medida?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -436,7 +501,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_document_number: {
+        Args: { doc_type: string }
+        Returns: string
+      }
     }
     Enums: {
       estado_cuenta: "pendiente" | "parcial" | "pagado"

@@ -11,19 +11,45 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Edit, Trash2, ArrowLeft, Package, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ArrowLeft, Package, AlertTriangle, Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Producto {
   id: string;
   nombre_producto: string;
-  sku: string;
-  categoria: string;
-  descripcion: string;
-  cantidad_disponible: number;
+  sku: string | null;
+  categoria: string | null;
+  descripcion: string | null;
+  cantidad_disponible: number | null;
   precio_unitario: number;
-  stock_minimo: number;
+  stock_minimo: number | null;
+  tipo: string;
+  unidad_medida: string;
   created_at: string;
 }
+
+const CATEGORIAS_IMPRENTA = [
+  'insumo',
+  'planchas',
+  'troqueles',
+  'negativos',
+  'papel',
+  'otros'
+];
+
+const TIPOS_PRODUCTO = [
+  'normal',
+  'especial'
+];
+
+const UNIDADES_MEDIDA = [
+  'und',
+  'resma',
+  'metro',
+  'kg',
+  'litro',
+  'rollo'
+];
 
 export default function Inventario() {
   const { user } = useAuth();
@@ -31,6 +57,7 @@ export default function Inventario() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
   const [formData, setFormData] = useState({
@@ -41,6 +68,8 @@ export default function Inventario() {
     cantidad_disponible: 0,
     precio_unitario: 0,
     stock_minimo: 0,
+    tipo: 'normal',
+    unidad_medida: 'und',
   });
 
   useEffect(() => {
@@ -70,11 +99,15 @@ export default function Inventario() {
     }
   };
 
-  const filteredProductos = productos.filter(producto =>
-    producto.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProductos = productos.filter(producto => {
+    const matchesSearch = producto.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      producto.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      producto.categoria?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !categoryFilter || producto.categoria === categoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const resetForm = () => {
     setFormData({
@@ -85,6 +118,8 @@ export default function Inventario() {
       cantidad_disponible: 0,
       precio_unitario: 0,
       stock_minimo: 0,
+      tipo: 'normal',
+      unidad_medida: 'und',
     });
     setEditingProducto(null);
   };
@@ -100,9 +135,11 @@ export default function Inventario() {
       sku: producto.sku || '',
       categoria: producto.categoria || '',
       descripcion: producto.descripcion || '',
-      cantidad_disponible: producto.cantidad_disponible,
+      cantidad_disponible: producto.cantidad_disponible || 0,
       precio_unitario: producto.precio_unitario,
-      stock_minimo: producto.stock_minimo,
+      stock_minimo: producto.stock_minimo || 0,
+      tipo: producto.tipo || 'normal',
+      unidad_medida: producto.unidad_medida || 'und',
     });
     setEditingProducto(producto);
     setIsDialogOpen(true);
@@ -123,6 +160,8 @@ export default function Inventario() {
             cantidad_disponible: formData.cantidad_disponible,
             precio_unitario: formData.precio_unitario,
             stock_minimo: formData.stock_minimo,
+            tipo: formData.tipo,
+            unidad_medida: formData.unidad_medida,
             user_id: user?.id 
           })
           .eq('id', editingProducto.id);
@@ -144,6 +183,8 @@ export default function Inventario() {
             cantidad_disponible: formData.cantidad_disponible,
             precio_unitario: formData.precio_unitario,
             stock_minimo: formData.stock_minimo,
+            tipo: formData.tipo,
+            unidad_medida: formData.unidad_medida,
             user_id: user?.id 
           }]);
         
@@ -263,12 +304,50 @@ export default function Inventario() {
                     
                     <div className="space-y-2">
                       <Label htmlFor="categoria">Categoría</Label>
-                      <Input
-                        id="categoria"
-                        value={formData.categoria}
-                        onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                        placeholder="Electrónicos, Ropa, etc."
-                      />
+                      <Select value={formData.categoria} onValueChange={(value) => setFormData({ ...formData, categoria: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIAS_IMPRENTA.map((categoria) => (
+                            <SelectItem key={categoria} value={categoria}>
+                              {categoria}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="tipo">Tipo</Label>
+                      <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIPOS_PRODUCTO.map((tipo) => (
+                            <SelectItem key={tipo} value={tipo}>
+                              {tipo}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="unidad_medida">Unidad de Medida</Label>
+                      <Select value={formData.unidad_medida} onValueChange={(value) => setFormData({ ...formData, unidad_medida: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una unidad" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {UNIDADES_MEDIDA.map((unidad) => (
+                            <SelectItem key={unidad} value={unidad}>
+                              {unidad}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     <div className="space-y-2">
@@ -330,17 +409,35 @@ export default function Inventario() {
             </Dialog>
           </div>
 
-          {/* Search */}
+          {/* Search and Filter */}
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nombre, SKU o categoría..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Buscar por nombre, SKU o categoría..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Todas las categorías" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todas las categorías</SelectItem>
+                      {CATEGORIAS_IMPRENTA.map((categoria) => (
+                        <SelectItem key={categoria} value={categoria}>
+                          {categoria}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -377,6 +474,7 @@ export default function Inventario() {
                         <TableHead>Producto</TableHead>
                         <TableHead>SKU</TableHead>
                         <TableHead>Categoría</TableHead>
+                        <TableHead>Tipo</TableHead>
                         <TableHead>Precio</TableHead>
                         <TableHead>Stock</TableHead>
                         <TableHead>Estado</TableHead>
@@ -407,6 +505,11 @@ export default function Inventario() {
                             {producto.categoria && (
                               <Badge variant="secondary">{producto.categoria}</Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={producto.tipo === 'especial' ? 'outline' : 'default'}>
+                              {producto.tipo}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <span className="font-mono">
