@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Clientes from "./pages/Clientes";
 import Ventas from "./pages/Ventas";
 import Inventario from "./pages/Inventario";
+import ProductosElaborados from "./pages/ProductosElaborados";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import CuentasPorPagar from "./pages/CuentasPorPagar";
 import ConciliacionBancaria from "./pages/ConciliacionBancaria";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/ventas" element={<Ventas />} />
             <Route path="/inventario" element={<Inventario />} />
+            <Route path="/productos-elaborados" element={<ProductosElaborados />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />
             <Route path="/cuentas-pagar" element={<CuentasPorPagar />} />
             <Route path="/cuentas-bancarias" element={<CuentasBancarias />} />

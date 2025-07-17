@@ -68,7 +68,7 @@ export default function Inventario() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('inventario')
+        .from('inventario_consumibles')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -130,13 +130,13 @@ export default function Inventario() {
       let result;
       if (editingProducto) {
         result = await supabase
-          .from('inventario')
+          .from('inventario_consumibles')
           .update(productData)
           .eq('id', editingProducto.id)
           .select();
       } else {
         result = await supabase
-          .from('inventario')
+          .from('inventario_consumibles')
           .insert([productData])
           .select();
       }
@@ -202,7 +202,7 @@ export default function Inventario() {
 
     try {
       const { error } = await supabase
-        .from('inventario')
+        .from('inventario_consumibles')
         .delete()
         .eq('id', id);
 

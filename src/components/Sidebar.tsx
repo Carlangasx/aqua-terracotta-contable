@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch } from 'lucide-react';
+import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -8,7 +8,8 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: Calculator },
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Ventas', href: '/ventas', icon: ShoppingCart },
-  { name: 'Inventario', href: '/inventario', icon: Package },
+  { name: 'Inventario Consumibles', href: '/inventario', icon: Package },
+  { name: 'Productos Elaborados', href: '/productos-elaborados', icon: Wrench },
   { name: 'Cuentas por Cobrar', href: '/cuentas-cobrar', icon: CreditCard },
   { name: 'Cuentas por Pagar', href: '/cuentas-pagar', icon: FileText },
   { name: 'Pagos', href: '/pagos', icon: Banknote },

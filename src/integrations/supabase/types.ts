@@ -325,15 +325,17 @@ export type Database = {
           },
         ]
       }
-      inventario: {
+      inventario_consumibles: {
         Row: {
           cantidad_disponible: number | null
           categoria: string | null
           created_at: string
           descripcion: string | null
+          fecha_ingreso: string | null
           id: string
           nombre_producto: string
           precio_unitario: number
+          proveedor: string | null
           sku: string | null
           stock_minimo: number | null
           tipo: string | null
@@ -346,9 +348,11 @@ export type Database = {
           categoria?: string | null
           created_at?: string
           descripcion?: string | null
+          fecha_ingreso?: string | null
           id?: string
           nombre_producto: string
           precio_unitario?: number
+          proveedor?: string | null
           sku?: string | null
           stock_minimo?: number | null
           tipo?: string | null
@@ -361,9 +365,11 @@ export type Database = {
           categoria?: string | null
           created_at?: string
           descripcion?: string | null
+          fecha_ingreso?: string | null
           id?: string
           nombre_producto?: string
           precio_unitario?: number
+          proveedor?: string | null
           sku?: string | null
           stock_minimo?: number | null
           tipo?: string | null
@@ -436,6 +442,115 @@ export type Database = {
             columns: ["cuenta_por_pagar_id"]
             isOneToOne: false
             referencedRelation: "cuentas_por_pagar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productos_elaborados: {
+        Row: {
+          actualizado_por: string
+          alto: number | null
+          ancho: number | null
+          cantidad: number | null
+          cliente_id: string | null
+          created_at: string
+          fecha_creacion: string | null
+          id: string
+          nombre_producto: string
+          numero_colores: number | null
+          observaciones: string | null
+          profundidad: number | null
+          tipo_material: string | null
+          ultima_modificacion: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actualizado_por: string
+          alto?: number | null
+          ancho?: number | null
+          cantidad?: number | null
+          cliente_id?: string | null
+          created_at?: string
+          fecha_creacion?: string | null
+          id?: string
+          nombre_producto: string
+          numero_colores?: number | null
+          observaciones?: string | null
+          profundidad?: number | null
+          tipo_material?: string | null
+          ultima_modificacion?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actualizado_por?: string
+          alto?: number | null
+          ancho?: number | null
+          cantidad?: number | null
+          cliente_id?: string | null
+          created_at?: string
+          fecha_creacion?: string | null
+          id?: string
+          nombre_producto?: string
+          numero_colores?: number | null
+          observaciones?: string | null
+          profundidad?: number | null
+          tipo_material?: string | null
+          ultima_modificacion?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_elaborados_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productos_elaborados_historial: {
+        Row: {
+          arte_final_pdf_url: string | null
+          cotizacion_pdf_url: string | null
+          created_at: string
+          descripcion: string
+          fecha_cambio: string | null
+          id: string
+          producto_elaborado_id: string | null
+          user_id: string
+          usuario_modificador: string
+        }
+        Insert: {
+          arte_final_pdf_url?: string | null
+          cotizacion_pdf_url?: string | null
+          created_at?: string
+          descripcion: string
+          fecha_cambio?: string | null
+          id?: string
+          producto_elaborado_id?: string | null
+          user_id: string
+          usuario_modificador: string
+        }
+        Update: {
+          arte_final_pdf_url?: string | null
+          cotizacion_pdf_url?: string | null
+          created_at?: string
+          descripcion?: string
+          fecha_cambio?: string | null
+          id?: string
+          producto_elaborado_id?: string | null
+          user_id?: string
+          usuario_modificador?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_elaborados_historial_producto_elaborado_id_fkey"
+            columns: ["producto_elaborado_id"]
+            isOneToOne: false
+            referencedRelation: "productos_elaborados"
             referencedColumns: ["id"]
           },
         ]

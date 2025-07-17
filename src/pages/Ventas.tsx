@@ -116,7 +116,7 @@ export default function Ventas() {
   const loadProductos = async () => {
     try {
       const { data, error } = await supabase
-        .from('inventario')
+        .from('inventario_consumibles')
         .select('id, nombre_producto, precio_unitario, cantidad_disponible')
         .order('nombre_producto');
 

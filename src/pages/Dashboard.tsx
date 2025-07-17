@@ -49,12 +49,12 @@ export default function Dashboard() {
 
       // Total productos
       const { count: productosCount } = await supabase
-        .from('inventario')
+        .from('inventario_consumibles')
         .select('*', { count: 'exact', head: true });
 
       // Productos con bajo stock
       const { count: bajoStockCount } = await supabase
-        .from('inventario')
+        .from('inventario_consumibles')
         .select('*', { count: 'exact', head: true })
         .filter('cantidad_disponible', 'lte', 'stock_minimo');
 
