@@ -87,6 +87,42 @@ export default function Documentos() {
     return matchesSearch && matchesTipo;
   });
 
+  const handleDownloadPDF = async (documento: any) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { documentId: documento.id }
+      });
+
+      if (error) {
+        console.error('Error generating PDF:', error);
+        toast({
+          title: "Error",
+          description: "Error al generar el PDF",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create a blob from the HTML response and open in new tab
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const newWindow = window.open(url, '_blank');
+      
+      // Clean up URL after opening
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        newWindow?.close();
+      }, 1000);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Error",
+        description: "Error al descargar el PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -233,7 +269,12 @@ export default function Documentos() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
-                              <Button variant="outline" size="sm" title="Descargar PDF">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                title="Descargar PDF"
+                                onClick={() => handleDownloadPDF(documento)}
+                              >
                                 <Download className="h-4 w-4" />
                               </Button>
                               <Button variant="outline" size="sm" title="Eliminar documento">

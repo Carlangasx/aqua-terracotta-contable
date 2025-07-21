@@ -6,18 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface VentaData {
-  id: string;
-  fecha: string;
-  subtotal: number;
-  iva: number;
+interface DocumentData {
+  id: number;
+  numero_documento: string;
+  tipo_documento: string;
+  fecha_emision: string;
   total: number;
+  descuento: number;
   observaciones?: string;
+  condiciones_pago: string;
+  moneda: string;
   productos: Array<{
-    producto: string;
+    nombre: string;
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
+  }>;
+  extras: Array<{
+    tipo: string;
+    descripcion: string;
+    precio: number;
   }>;
   clientes: {
     nombre_empresa: string;
@@ -28,13 +36,41 @@ interface VentaData {
   };
 }
 
-function generateInvoiceHTML(venta: VentaData): string {
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('es-VE', {
+function generateDocumentHTML(document: DocumentData): string {
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'VES',
+    currency: document.moneda || 'USD',
   }).format(amount);
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-VE');
+  
+  const getDocumentTitle = (tipo: string) => {
+    switch (tipo) {
+      case 'FACT': return 'FACTURA';
+      case 'NDE': return 'NOTA DE ENTREGA';
+      case 'REC': return 'RECIBO';
+      case 'SAL': return 'SALIDA DE ALMACÉN';
+      case 'NCRE': return 'NOTA DE CRÉDITO';
+      default: return 'DOCUMENTO';
+    }
+  };
+
+  const subtotal = document.total / (1 - (document.descuento / 100));
+  const descuentoAmount = subtotal * (document.descuento / 100);
+  const allItems = [
+    ...document.productos.map(p => ({
+      descripcion: p.nombre,
+      cantidad: p.cantidad,
+      precio_unitario: p.precio_unitario,
+      subtotal: p.subtotal
+    })),
+    ...document.extras.map(e => ({
+      descripcion: `${e.tipo} - ${e.descripcion}`,
+      cantidad: 1,
+      precio_unitario: e.precio,
+      subtotal: e.precio
+    }))
+  ];
 
   return `
     <!DOCTYPE html>
@@ -42,7 +78,7 @@ function generateInvoiceHTML(venta: VentaData): string {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Factura #${venta.id.slice(-8).toUpperCase()}</title>
+        <title>${getDocumentTitle(document.tipo_documento)} #${document.numero_documento}</title>
         <style>
             * {
                 margin: 0;
@@ -268,9 +304,9 @@ function generateInvoiceHTML(venta: VentaData): string {
                     <div class="company-tagline">Soluciones Contables Inteligentes</div>
                 </div>
                 <div class="invoice-details">
-                    <div class="invoice-title">FACTURA</div>
-                    <div class="invoice-number">N° ${venta.id.slice(-8).toUpperCase()}</div>
-                    <div class="invoice-date">Fecha: ${formatDate(venta.fecha)}</div>
+                    <div class="invoice-title">${getDocumentTitle(document.tipo_documento)}</div>
+                    <div class="invoice-number">N° ${document.numero_documento}</div>
+                    <div class="invoice-date">Fecha: ${formatDate(document.fecha_emision)}</div>
                 </div>
             </div>
 
@@ -280,19 +316,19 @@ function generateInvoiceHTML(venta: VentaData): string {
                 <div class="client-info">
                     <div class="info-row">
                         <span class="info-label">Empresa:</span>
-                        <span class="info-value">${venta.clientes.nombre_empresa}</span>
+                        <span class="info-value">${document.clientes.nombre_empresa}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">RIF:</span>
-                        <span class="info-value">${venta.clientes.rif}</span>
+                        <span class="info-value">${document.clientes.rif}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Dirección:</span>
-                        <span class="info-value">${venta.clientes.direccion_fiscal || 'N/A'}</span>
+                        <span class="info-value">${document.clientes.direccion_fiscal || 'N/A'}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Teléfono:</span>
-                        <span class="info-value">${venta.clientes.telefono_empresa || 'N/A'}</span>
+                        <span class="info-value">${document.clientes.telefono_empresa || 'N/A'}</span>
                     </div>
                 </div>
             </div>
@@ -308,12 +344,12 @@ function generateInvoiceHTML(venta: VentaData): string {
                     </tr>
                 </thead>
                 <tbody>
-                    ${venta.productos.map(producto => `
+                    ${allItems.map(item => `
                         <tr>
-                            <td>${producto.producto}</td>
-                            <td class="text-center">${producto.cantidad}</td>
-                            <td class="text-right">${formatCurrency(producto.precio_unitario)}</td>
-                            <td class="text-right">${formatCurrency(producto.subtotal)}</td>
+                            <td>${item.descripcion}</td>
+                            <td class="text-center">${item.cantidad}</td>
+                            <td class="text-right">${formatCurrency(item.precio_unitario)}</td>
+                            <td class="text-right">${formatCurrency(item.subtotal)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -324,24 +360,32 @@ function generateInvoiceHTML(venta: VentaData): string {
                 <table class="totals-table">
                     <tr>
                         <td class="label">Subtotal:</td>
-                        <td class="amount">${formatCurrency(venta.subtotal)}</td>
+                        <td class="amount">${formatCurrency(subtotal)}</td>
                     </tr>
+                    ${document.descuento > 0 ? `
                     <tr>
-                        <td class="label">IVA (16%):</td>
-                        <td class="amount">${formatCurrency(venta.iva)}</td>
+                        <td class="label">Descuento (${document.descuento}%):</td>
+                        <td class="amount">-${formatCurrency(descuentoAmount)}</td>
                     </tr>
+                    ` : ''}
                     <tr>
                         <td class="label">Total:</td>
-                        <td class="amount">${formatCurrency(venta.total)}</td>
+                        <td class="amount">${formatCurrency(document.total)}</td>
                     </tr>
                 </table>
             </div>
+            
+            <!-- Payment Terms -->
+            <div class="notes-section">
+                <div class="section-title">Condiciones de Pago</div>
+                <div class="notes-content">${document.condiciones_pago}</div>
+            </div>
 
-            ${venta.observaciones ? `
+            ${document.observaciones ? `
             <!-- Notes -->
             <div class="notes-section">
                 <div class="section-title">Observaciones</div>
-                <div class="notes-content">${venta.observaciones}</div>
+                <div class="notes-content">${document.observaciones}</div>
             </div>
             ` : ''}
 
@@ -365,10 +409,10 @@ serve(async (req) => {
   }
 
   try {
-    const { ventaId } = await req.json();
+    const { documentId } = await req.json();
 
-    if (!ventaId) {
-      throw new Error('ID de venta requerido');
+    if (!documentId) {
+      throw new Error('ID de documento requerido');
     }
 
     // Initialize Supabase client
@@ -377,11 +421,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Fetching venta data for ID:', ventaId);
+    console.log('Fetching document data for ID:', documentId);
 
-    // Fetch venta data with client information
-    const { data: venta, error } = await supabase
-      .from('ventas')
+    // Fetch document data with client information
+    const { data: document, error } = await supabase
+      .from('documentos_generados')
       .select(`
         *,
         clientes (
@@ -392,30 +436,29 @@ serve(async (req) => {
           correo
         )
       `)
-      .eq('id', ventaId)
+      .eq('id', documentId)
       .single();
 
     if (error) {
-      console.error('Error fetching venta:', error);
-      throw new Error('Error al obtener los datos de la venta');
+      console.error('Error fetching document:', error);
+      throw new Error('Error al obtener los datos del documento');
     }
 
-    if (!venta) {
-      throw new Error('Venta no encontrada');
+    if (!document) {
+      throw new Error('Documento no encontrado');
     }
 
-    console.log('Venta data retrieved:', { id: venta.id, cliente: venta.clientes?.nombre_empresa });
+    console.log('Document data retrieved:', { id: document.id, numero: document.numero_documento });
 
     // Generate HTML
-    const html = generateInvoiceHTML(venta as VentaData);
+    const html = generateDocumentHTML(document as DocumentData);
 
-    // For now, return the HTML directly 
-    // In the future, this could be converted to PDF using a service like Puppeteer
+    // Return the HTML directly 
     return new Response(html, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `inline; filename="factura-${venta.id.slice(-8).toUpperCase()}.html"`,
+        'Content-Disposition': `inline; filename="${document.tipo_documento}-${document.numero_documento}.html"`,
       },
     });
 

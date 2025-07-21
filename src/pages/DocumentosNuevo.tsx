@@ -67,6 +67,9 @@ export default function DocumentosNuevo() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
+  const [savedDocumentId, setSavedDocumentId] = useState<number | null>(null);
+  const [documentData, setDocumentData] = useState<any>(null);
+  
   // Datos del documento
   const [tipoDocumento, setTipoDocumento] = useState('');
   const [clienteId, setClienteId] = useState('');
@@ -165,6 +168,44 @@ export default function DocumentosNuevo() {
     setLineas(prev => prev.filter(linea => linea.id !== id));
   };
 
+  const handleDownloadPDF = async () => {
+    if (!savedDocumentId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { documentId: savedDocumentId }
+      });
+
+      if (error) {
+        console.error('Error generating PDF:', error);
+        toast({
+          title: "Error",
+          description: "Error al generar el PDF",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create a blob from the HTML response and open in new tab
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const newWindow = window.open(url, '_blank');
+      
+      // Clean up URL after opening
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        newWindow?.close();
+      }, 1000);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Error",
+        description: "Error al descargar el PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   const subtotal = lineas.reduce((sum, linea) => sum + linea.subtotal, 0);
   const montoDescuento = subtotal * (descuento / 100);
   const total = subtotal - montoDescuento;
@@ -229,12 +270,20 @@ export default function DocumentosNuevo() {
 
       if (error) throw error;
 
+      // Save document data for PDF generation
+      setSavedDocumentId(data.id);
+      setDocumentData({
+        tipoDocumento,
+        numeroDocumento: numeroData
+      });
+
       toast({
         title: "Éxito",
         description: `${TIPOS_DOCUMENTO.find(t => t.value === tipoDocumento)?.label} creada correctamente`,
       });
 
-      navigate('/documentos');
+      // Don't navigate immediately, let user download PDF if needed
+      // navigate('/documentos');
     } catch (error: any) {
       console.error('Error saving document:', error);
       toast({
@@ -572,10 +621,26 @@ export default function DocumentosNuevo() {
                       {saving ? 'Guardando...' : 'Generar Documento'}
                     </Button>
                     
-                    <Button variant="outline" className="w-full" disabled>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      disabled={!savedDocumentId}
+                      onClick={handleDownloadPDF}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Descargar PDF
                     </Button>
+                    
+                    {savedDocumentId && (
+                      <Button 
+                        variant="secondary" 
+                        className="w-full" 
+                        onClick={() => navigate('/documentos')}
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Ir a Documentos
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
