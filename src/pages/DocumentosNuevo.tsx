@@ -294,7 +294,7 @@ export default function DocumentosNuevo() {
 
       if (error) throw error;
 
-      // Save document data for PDF generation
+      // Update state immediately after successful save
       setSavedDocumentId(data.id);
       setDocumentData({
         tipoDocumento,
@@ -306,8 +306,8 @@ export default function DocumentosNuevo() {
         description: `${TIPOS_DOCUMENTO.find(t => t.value === tipoDocumento)?.label} creada correctamente`,
       });
 
-      // Don't navigate immediately, let user download PDF if needed
-      // navigate('/documentos');
+      console.log('Document saved with ID:', data.id);
+
     } catch (error: any) {
       console.error('Error saving document:', error);
       toast({
