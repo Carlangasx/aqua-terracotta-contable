@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
@@ -5,6 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+interface ProductoItem {
+  nombre: string;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+}
+
+interface ExtraItem {
+  tipo?: string;
+  descripcion?: string;
+  nombre?: string;
+  precio: number;
+  cantidad?: number;
+  subtotal?: number;
+}
 
 interface DocumentData {
   id: number;
@@ -16,17 +33,8 @@ interface DocumentData {
   observaciones?: string;
   condiciones_pago: string;
   moneda: string;
-  productos: Array<{
-    nombre: string;
-    cantidad: number;
-    precio_unitario: number;
-    subtotal: number;
-  }>;
-  extras: Array<{
-    tipo: string;
-    descripcion: string;
-    precio: number;
-  }>;
+  productos: string | ProductoItem[];
+  extras: string | ExtraItem[];
   clientes: {
     nombre_empresa: string;
     rif: string;
@@ -34,6 +42,18 @@ interface DocumentData {
     telefono_empresa?: string;
     correo?: string;
   };
+}
+
+function parseJsonField(field: string | any[]): any[] {
+  if (typeof field === 'string') {
+    try {
+      return JSON.parse(field);
+    } catch (e) {
+      console.error('Error parsing JSON field:', e);
+      return [];
+    }
+  }
+  return Array.isArray(field) ? field : [];
 }
 
 function generateDocumentHTML(document: DocumentData): string {
@@ -55,20 +75,29 @@ function generateDocumentHTML(document: DocumentData): string {
     }
   };
 
+  // Parse JSON fields properly
+  const productos = parseJsonField(document.productos);
+  const extras = parseJsonField(document.extras);
+
+  console.log('Parsed productos:', productos);
+  console.log('Parsed extras:', extras);
+
   const subtotal = document.total / (1 - (document.descuento / 100));
   const descuentoAmount = subtotal * (document.descuento / 100);
+  
+  // Combine all items
   const allItems = [
-    ...document.productos.map(p => ({
+    ...productos.map((p: ProductoItem) => ({
       descripcion: p.nombre,
-      cantidad: p.cantidad,
-      precio_unitario: p.precio_unitario,
-      subtotal: p.subtotal
+      cantidad: p.cantidad || 1,
+      precio_unitario: p.precio_unitario || 0,
+      subtotal: p.subtotal || 0
     })),
-    ...document.extras.map(e => ({
-      descripcion: `${e.tipo} - ${e.descripcion}`,
-      cantidad: 1,
-      precio_unitario: e.precio,
-      subtotal: e.precio
+    ...extras.map((e: ExtraItem) => ({
+      descripcion: e.nombre || e.descripcion || `${e.tipo || 'Extra'}`,
+      cantidad: e.cantidad || 1,
+      precio_unitario: e.precio || 0,
+      subtotal: e.subtotal || e.precio || 0
     }))
   ];
 
@@ -300,8 +329,8 @@ function generateDocumentHTML(document: DocumentData): string {
             <!-- Header -->
             <div class="header">
                 <div class="company-info">
-                    <div class="company-name">ContaSimple</div>
-                    <div class="company-tagline">Soluciones Contables Inteligentes</div>
+                    <div class="company-name">PrintMatch PRO</div>
+                    <div class="company-tagline">Soluciones de Impresión Profesional</div>
                 </div>
                 <div class="invoice-details">
                     <div class="invoice-title">${getDocumentTitle(document.tipo_documento)}</div>
@@ -352,6 +381,11 @@ function generateDocumentHTML(document: DocumentData): string {
                             <td class="text-right">${formatCurrency(item.subtotal)}</td>
                         </tr>
                     `).join('')}
+                    ${allItems.length === 0 ? `
+                        <tr>
+                            <td colspan="4" class="text-center">No hay productos o servicios registrados</td>
+                        </tr>
+                    ` : ''}
                 </tbody>
             </table>
 
@@ -391,9 +425,9 @@ function generateDocumentHTML(document: DocumentData): string {
 
             <!-- Footer -->
             <div class="footer">
-                <p>Generado por ContaSimple - ${new Date().toLocaleDateString('es-VE')}</p>
+                <p>Generado por PrintMatch PRO - ${new Date().toLocaleDateString('es-VE')}</p>
                 <div class="legal-notice">
-                    FACTURA SIN DERECHO A CRÉDITO FISCAL
+                    DOCUMENTO SIN VALIDEZ FISCAL
                 </div>
             </div>
         </div>
@@ -448,7 +482,12 @@ serve(async (req) => {
       throw new Error('Documento no encontrado');
     }
 
-    console.log('Document data retrieved:', { id: document.id, numero: document.numero_documento });
+    console.log('Document data retrieved:', { 
+      id: document.id, 
+      numero: document.numero_documento,
+      productos: typeof document.productos,
+      extras: typeof document.extras 
+    });
 
     // Generate HTML
     const html = generateDocumentHTML(document as DocumentData);

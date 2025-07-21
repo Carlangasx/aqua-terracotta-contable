@@ -169,9 +169,18 @@ export default function DocumentosNuevo() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!savedDocumentId) return;
+    if (!savedDocumentId) {
+      toast({
+        title: "Error",
+        description: "Debe guardar el documento primero",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
+      console.log('Downloading PDF for document:', savedDocumentId);
+      
       const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
         body: { documentId: savedDocumentId }
       });
@@ -186,21 +195,36 @@ export default function DocumentosNuevo() {
         return;
       }
 
-      // Create a blob from the HTML response and open in new tab
+      // Create a blob from the HTML response and convert to PDF view
       const blob = new Blob([data], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
-      const newWindow = window.open(url, '_blank');
       
-      // Clean up URL after opening
+      // Open in new window for better user experience
+      const newWindow = window.open(url, '_blank', 'width=800,height=600');
+      
+      // Clean up after a delay
       setTimeout(() => {
         URL.revokeObjectURL(url);
-        newWindow?.close();
-      }, 1000);
+      }, 30000); // 30 seconds
+      
+      if (!newWindow) {
+        toast({
+          title: "Advertencia",
+          description: "Por favor permite las ventanas emergentes para descargar el PDF",
+          variant: "destructive",
+        });
+      }
+
+      toast({
+        title: "Éxito",
+        description: "PDF generado correctamente",
+      });
+      
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
         title: "Error",
-        description: "Error al descargar el PDF",
+        description: "Error al procesar la descarga del PDF",
         variant: "destructive",
       });
     }
