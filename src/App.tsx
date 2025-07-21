@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Clientes from "./pages/Clientes";
 import Documentos from "./pages/Documentos";
+import DocumentosNuevo from "./pages/DocumentosNuevo";
 import Inventario from "./pages/Inventario";
 import ProductosElaborados from "./pages/ProductosElaborados";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
@@ -30,8 +31,9 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/clientes" element={<Clientes />} />
-          <Route path="/documentos" element={<Documentos />} />
-          <Route path="/configuracion" element={<Configuracion />} />
+           <Route path="/documentos" element={<Documentos />} />
+           <Route path="/documentos/nuevo" element={<DocumentosNuevo />} />
+           <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/productos-elaborados" element={<ProductosElaborados />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />

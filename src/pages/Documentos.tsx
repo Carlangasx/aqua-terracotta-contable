@@ -42,7 +42,7 @@ export default function Documentos() {
   const [documentos, setDocumentos] = useState<DocumentoGenerado[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('all');
 
   useEffect(() => {
     if (user) {
@@ -104,16 +104,24 @@ export default function Documentos() {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-primary">Generación de Documentos</h1>
+                <h1 className="text-3xl font-bold text-primary">Documentos Generados</h1>
                 <p className="text-muted-foreground">Facturas, notas de entrega, recibos y más</p>
               </div>
             </div>
             
-            <Link to="/configuracion">
-              <Button variant="outline">
-                Configurar Empresa
-              </Button>
-            </Link>
+            <div className="flex space-x-2">
+              <Link to="/documentos/nuevo">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo Documento
+                </Button>
+              </Link>
+              <Link to="/configuracion">
+                <Button variant="outline">
+                  Configurar Empresa
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <Card className="mb-6">
@@ -160,7 +168,7 @@ export default function Documentos() {
             <CardHeader>
               <CardTitle>Documentos ({filteredDocumentos.length})</CardTitle>
               <CardDescription>
-                Módulo en desarrollo. Próximamente: creación de facturas, notas de entrega, recibos, salidas de almacén y notas de crédito.
+                Listado de todos los documentos generados. Puede filtrar por tipo de documento, cliente o buscar por número.
               </CardDescription>
             </CardHeader>
             <CardContent>

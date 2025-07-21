@@ -1,13 +1,22 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings } from 'lucide-react';
+import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings, Plus, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Calculator },
   { name: 'Clientes', href: '/clientes', icon: Users },
-  { name: 'Documentos', href: '/documentos', icon: FileText },
+  { 
+    name: 'Generación de Documentos', 
+    icon: FileText, 
+    isSection: true,
+    items: [
+      { name: 'Lista de Documentos', href: '/documentos', icon: List },
+      { name: 'Nuevo Documento', href: '/documentos/nuevo', icon: Plus },
+    ]
+  },
   { name: 'Inventario Consumibles', href: '/inventario', icon: Package },
   { name: 'Productos Elaborados', href: '/productos-elaborados', icon: Wrench },
   { name: 'Cuentas por Cobrar', href: '/cuentas-cobrar', icon: CreditCard },
@@ -21,6 +30,9 @@ const navigation = [
 export function Sidebar() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [documentosOpen, setDocumentosOpen] = useState(
+    location.pathname.startsWith('/documentos')
+  );
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-sidebar-background">
@@ -30,24 +42,67 @@ export function Sidebar() {
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={() => setOpen(false)}
-              className={`
-                flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
-                ${isActive 
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-                }
-              `}
-            >
-              <item.icon className="mr-3 h-5 w-5" />
-              {item.name}
-            </Link>
-          );
+          if (item.isSection) {
+            const isAnyChildActive = item.items?.some(child => location.pathname === child.href);
+            return (
+              <Collapsible
+                key={item.name}
+                open={documentosOpen}
+                onOpenChange={setDocumentosOpen}
+              >
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground">
+                  <div className="flex items-center">
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </div>
+                  <span className={`transform transition-transform ${documentosOpen ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 mt-1">
+                  {item.items?.map((subItem) => {
+                    const isActive = location.pathname === subItem.href;
+                    return (
+                      <Link
+                        key={subItem.name}
+                        to={subItem.href}
+                        onClick={() => setOpen(false)}
+                        className={`
+                          flex items-center px-6 py-2 text-sm font-medium rounded-md transition-colors ml-6
+                          ${isActive 
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                            : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                          }
+                        `}
+                      >
+                        <subItem.icon className="mr-3 h-4 w-4" />
+                        {subItem.name}
+                      </Link>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          } else {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={() => setOpen(false)}
+                className={`
+                  flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
+                  ${isActive 
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                  }
+                `}
+              >
+                <item.icon className="mr-3 h-5 w-5" />
+                {item.name}
+              </Link>
+            );
+          }
         })}
       </nav>
     </div>
