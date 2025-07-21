@@ -41,11 +41,11 @@ interface LineaDocumento {
 }
 
 const TIPOS_DOCUMENTO = [
-  { value: 'factura', label: 'Factura' },
-  { value: 'nota_entrega', label: 'Nota de Entrega' },
-  { value: 'recibo', label: 'Recibo' },
-  { value: 'salida_almacen', label: 'Salida de Almacén' },
-  { value: 'nota_credito', label: 'Nota de Crédito' }
+  { "label": "Factura", "value": "FACT" },
+  { "label": "Nota de entrega", "value": "NDE" },
+  { "label": "Salida de almacén", "value": "SAL" },
+  { "label": "Recibo", "value": "REC" },
+  { "label": "Nota de crédito", "value": "NCRE" }
 ];
 
 const TIPOS_EXTRAS = [
