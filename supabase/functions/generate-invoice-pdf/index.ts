@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+import jsPDF from "https://esm.sh/jspdf@2.5.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -521,31 +521,136 @@ serve(async (req) => {
     // Generate HTML
     const html = generateDocumentHTML(document as DocumentData);
 
-    console.log('Generating PDF from HTML...');
+    console.log('Generating PDF using jsPDF...');
     
-    // Launch browser and generate PDF
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    // Create new PDF document
+    const doc = new jsPDF();
+    
+    // Set font
+    doc.setFont('helvetica');
+    
+    // Add header
+    doc.setFontSize(20);
+    doc.setTextColor(22, 163, 74); // Green color
+    doc.text('PrintMatch PRO', 20, 25);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(document.tipo_documento || 'DOCUMENTO', 150, 25);
+    doc.text(`N° ${document.numero_documento}`, 150, 35);
+    doc.text(`Fecha: ${new Date(document.fecha_emision).toLocaleDateString('es-VE')}`, 150, 45);
+    
+    // Add client info
+    let yPos = 65;
+    doc.setFontSize(14);
+    doc.text('DATOS DEL CLIENTE', 20, yPos);
+    
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.text(`Empresa: ${document.clientes.nombre_empresa}`, 20, yPos);
+    yPos += 7;
+    doc.text(`RIF: ${document.clientes.rif}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Dirección: ${document.clientes.direccion_fiscal || 'N/A'}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Teléfono: ${document.clientes.telefono_empresa || 'N/A'}`, 20, yPos);
+    
+    // Add products table
+    yPos += 20;
+    doc.setFontSize(12);
+    doc.text('PRODUCTOS/SERVICIOS', 20, yPos);
+    
+    yPos += 10;
+    doc.setFontSize(9);
+    doc.text('Descripción', 20, yPos);
+    doc.text('Cant.', 120, yPos);
+    doc.text('Precio Unit.', 140, yPos);
+    doc.text('Subtotal', 170, yPos);
+    
+    yPos += 5;
+    doc.line(20, yPos, 190, yPos); // Horizontal line
+    
+    // Parse and add items
+    const productos = parseJsonField(document.productos);
+    const extras = parseJsonField(document.extras);
+    
+    const allItems = [];
+    productos.forEach((p: any) => {
+      allItems.push({
+        descripcion: p.nombre || p.descripcion || 'Producto sin nombre',
+        cantidad: p.cantidad || 1,
+        precio_unitario: p.precio_unitario || p.precio || 0,
+        subtotal: p.subtotal || 0
+      });
     });
     
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    // Generate PDF
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      margin: {
-        top: '20mm',
-        right: '15mm',
-        bottom: '20mm',
-        left: '15mm',
-      },
-      printBackground: true,
+    extras.forEach((e: any) => {
+      allItems.push({
+        descripcion: e.nombre || e.descripcion || `${e.tipo || 'Extra'}`,
+        cantidad: e.cantidad || 1,
+        precio_unitario: e.precio || 0,
+        subtotal: e.subtotal || e.precio || 0
+      });
     });
     
-    await browser.close();
+    yPos += 7;
+    allItems.forEach((item) => {
+      if (yPos > 270) { // Check if we need a new page
+        doc.addPage();
+        yPos = 25;
+      }
+      
+      doc.text(item.descripcion.substring(0, 50), 20, yPos);
+      doc.text(item.cantidad.toString(), 120, yPos);
+      doc.text(`$${item.precio_unitario.toFixed(2)}`, 140, yPos);
+      doc.text(`$${item.subtotal.toFixed(2)}`, 170, yPos);
+      yPos += 7;
+    });
     
-    console.log('PDF generated successfully');
+    // Add totals
+    yPos += 10;
+    doc.line(140, yPos, 190, yPos); // Horizontal line
+    yPos += 7;
+    
+    const subtotal = document.total / (1 - (document.descuento / 100));
+    const descuentoAmount = subtotal * (document.descuento / 100);
+    
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 140, yPos);
+    yPos += 7;
+    
+    if (document.descuento > 0) {
+      doc.text(`Descuento (${document.descuento}%): -$${descuentoAmount.toFixed(2)}`, 140, yPos);
+      yPos += 7;
+    }
+    
+    doc.setFontSize(11);
+    doc.text(`TOTAL: $${document.total.toFixed(2)}`, 140, yPos);
+    
+    // Add payment terms and notes
+    yPos += 15;
+    doc.setFontSize(10);
+    doc.text('Condiciones de Pago:', 20, yPos);
+    yPos += 7;
+    doc.text(document.condiciones_pago || 'Contado', 20, yPos);
+    
+    if (document.observaciones) {
+      yPos += 10;
+      doc.text('Observaciones:', 20, yPos);
+      yPos += 7;
+      doc.text(document.observaciones.substring(0, 100), 20, yPos);
+    }
+    
+    // Add footer
+    yPos += 20;
+    doc.setFontSize(8);
+    doc.text('Generado por PrintMatch PRO', 20, yPos);
+    doc.text('DOCUMENTO SIN VALIDEZ FISCAL', 20, yPos + 7);
+    
+    // Generate PDF buffer
+    const pdfArrayBuffer = doc.output('arraybuffer');
+    const pdfBuffer = new Uint8Array(pdfArrayBuffer);
+    
+    console.log('PDF generated successfully with jsPDF');
 
     // Return the PDF as binary data
     return new Response(pdfBuffer, {
