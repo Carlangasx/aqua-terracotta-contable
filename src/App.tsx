@@ -7,7 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Clientes from "./pages/Clientes";
-import Ventas from "./pages/Ventas";
+import Documentos from "./pages/Documentos";
 import Inventario from "./pages/Inventario";
 import ProductosElaborados from "./pages/ProductosElaborados";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
@@ -15,6 +15,7 @@ import CuentasPorPagar from "./pages/CuentasPorPagar";
 import ConciliacionBancaria from "./pages/ConciliacionBancaria";
 import CuentasBancarias from "./pages/CuentasBancarias";
 import NotFound from "./pages/NotFound";
+import Configuracion from "./pages/Configuracion";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +30,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/clientes" element={<Clientes />} />
-            <Route path="/ventas" element={<Ventas />} />
+          <Route path="/documentos" element={<Documentos />} />
+          <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/productos-elaborados" element={<ProductosElaborados />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />

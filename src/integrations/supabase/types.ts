@@ -119,6 +119,48 @@ export type Database = {
           },
         ]
       }
+      configuracion_empresa: {
+        Row: {
+          condiciones_pago_default: string | null
+          correo: string | null
+          created_at: string
+          direccion_fiscal: string
+          id: string
+          logo_url: string | null
+          razon_social: string
+          rif: string
+          telefono: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          condiciones_pago_default?: string | null
+          correo?: string | null
+          created_at?: string
+          direccion_fiscal: string
+          id?: string
+          logo_url?: string | null
+          razon_social: string
+          rif: string
+          telefono?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          condiciones_pago_default?: string | null
+          correo?: string | null
+          created_at?: string
+          direccion_fiscal?: string
+          id?: string
+          logo_url?: string | null
+          razon_social?: string
+          rif?: string
+          telefono?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cuentas_bancarias: {
         Row: {
           activa: boolean
@@ -269,11 +311,15 @@ export type Database = {
       documentos_generados: {
         Row: {
           cliente_id: string | null
+          condiciones_pago: string | null
           created_at: string | null
+          descuento: number | null
           estado: string | null
           extras: Json | null
           fecha_emision: string | null
           id: number
+          moneda: string | null
+          numero_control_general: number | null
           numero_documento: string
           observaciones: string | null
           productos: Json | null
@@ -285,11 +331,15 @@ export type Database = {
         }
         Insert: {
           cliente_id?: string | null
+          condiciones_pago?: string | null
           created_at?: string | null
+          descuento?: number | null
           estado?: string | null
           extras?: Json | null
           fecha_emision?: string | null
           id?: number
+          moneda?: string | null
+          numero_control_general?: number | null
           numero_documento: string
           observaciones?: string | null
           productos?: Json | null
@@ -301,11 +351,15 @@ export type Database = {
         }
         Update: {
           cliente_id?: string | null
+          condiciones_pago?: string | null
           created_at?: string | null
+          descuento?: number | null
           estado?: string | null
           extras?: Json | null
           fecha_emision?: string | null
           id?: number
+          moneda?: string | null
+          numero_control_general?: number | null
           numero_documento?: string
           observaciones?: string | null
           productos?: Json | null
@@ -445,6 +499,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pedidos: {
+        Row: {
+          alto: number
+          ancho: number
+          cantidad: number
+          correo_contacto: string
+          created_at: string
+          fecha_creacion: string
+          id: string
+          nombre_contacto: string
+          plano_pdf_url: string | null
+          profundidad: number
+          puesto_contacto: string
+          rif_pdf_url: string | null
+          soporte: Database["public"]["Enums"]["tipo_soporte"]
+          telefono: string
+          unidad: Database["public"]["Enums"]["unidad_medida"]
+          updated_at: string
+        }
+        Insert: {
+          alto: number
+          ancho: number
+          cantidad: number
+          correo_contacto: string
+          created_at?: string
+          fecha_creacion?: string
+          id?: string
+          nombre_contacto: string
+          plano_pdf_url?: string | null
+          profundidad: number
+          puesto_contacto: string
+          rif_pdf_url?: string | null
+          soporte: Database["public"]["Enums"]["tipo_soporte"]
+          telefono: string
+          unidad?: Database["public"]["Enums"]["unidad_medida"]
+          updated_at?: string
+        }
+        Update: {
+          alto?: number
+          ancho?: number
+          cantidad?: number
+          correo_contacto?: string
+          created_at?: string
+          fecha_creacion?: string
+          id?: string
+          nombre_contacto?: string
+          plano_pdf_url?: string | null
+          profundidad?: number
+          puesto_contacto?: string
+          rif_pdf_url?: string | null
+          soporte?: Database["public"]["Enums"]["tipo_soporte"]
+          telefono?: string
+          unidad?: Database["public"]["Enums"]["unidad_medida"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       productos_elaborados: {
         Row: {
@@ -616,6 +727,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_control_number: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       generate_document_number: {
         Args: { doc_type: string }
         Returns: string
@@ -627,6 +742,8 @@ export type Database = {
       moneda: "VES" | "USD"
       tipo_cuenta_bancaria: "ahorro" | "corriente"
       tipo_pago: "cobranza" | "pago"
+      tipo_soporte: "Microcorrugado" | "Sulfatada" | "Kraft" | "Otra"
+      unidad_medida: "cm" | "mm"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -759,6 +876,8 @@ export const Constants = {
       moneda: ["VES", "USD"],
       tipo_cuenta_bancaria: ["ahorro", "corriente"],
       tipo_pago: ["cobranza", "pago"],
+      tipo_soporte: ["Microcorrugado", "Sulfatada", "Kraft", "Otra"],
+      unidad_medida: ["cm", "mm"],
     },
   },
 } as const

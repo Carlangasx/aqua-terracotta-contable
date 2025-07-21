@@ -4,52 +4,72 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, ArrowLeft } from 'lucide-react';
+import { Plus, Search, ArrowLeft, FileText, Download, Trash2 } from 'lucide-react';
 
-interface Cliente {
-  id: string;
-  nombre_empresa: string;
-  rif: string;
+interface DocumentoGenerado {
+  id: number;
+  tipo_documento: string;
+  numero_documento: string;
+  numero_control_general: number;
+  cliente_id: string;
+  fecha_emision: string;
+  total: number;
+  estado: string;
+  clientes?: {
+    nombre_empresa: string;
+    rif: string;
+  };
 }
 
 const TIPOS_DOCUMENTO = [
-  { value: 'FACT', label: 'Factura' },
-  { value: 'NDE', label: 'Nota de Entrega' },
-  { value: 'SAL', label: 'Salida de Almacén' }
+  { value: 'factura', label: 'Factura' },
+  { value: 'nota_entrega', label: 'Nota de Entrega' },
+  { value: 'recibo', label: 'Recibo' },
+  { value: 'salida_almacen', label: 'Salida de Almacén' },
+  { value: 'nota_credito', label: 'Nota de Crédito' }
 ];
 
 export default function Documentos() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [documentos, setDocumentos] = useState<DocumentoGenerado[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTipo, setSelectedTipo] = useState('');
-  const [selectedCliente, setSelectedCliente] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('');
 
   useEffect(() => {
     if (user) {
-      loadClientes();
+      loadDocumentos();
     }
   }, [user]);
 
-  const loadClientes = async () => {
+  const loadDocumentos = async () => {
     try {
       const { data, error } = await supabase
-        .from('clientes')
-        .select('id, nombre_empresa, rif')
-        .order('nombre_empresa');
+        .from('documentos_generados')
+        .select(`
+          *,
+          clientes (
+            nombre_empresa,
+            rif
+          )
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setClientes(data || []);
+      setDocumentos(data || []);
     } catch (error) {
-      console.error('Error loading clientes:', error);
+      console.error('Error loading documentos:', error);
       toast({
         title: "Error",
-        description: "Error al cargar los clientes",
+        description: "Error al cargar los documentos",
         variant: "destructive",
       });
     } finally {
@@ -57,57 +77,15 @@ export default function Documentos() {
     }
   };
 
-  const handleCreateDocument = async () => {
-    if (!selectedTipo || !selectedCliente) {
-      toast({
-        title: "Error",
-        description: "Selecciona un tipo de documento y cliente",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Generate document number
-      const { data: numeroData, error: numeroError } = await supabase
-        .rpc('generate_document_number', { doc_type: selectedTipo });
-
-      if (numeroError) throw numeroError;
-
-      // Create document
-      const { data, error } = await supabase
-        .from('documentos_generados')
-        .insert({
-          tipo_documento: selectedTipo,
-          numero_documento: numeroData,
-          cliente_id: selectedCliente,
-          user_id: user?.id,
-          productos: [],
-          extras: [],
-          total: 0
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Éxito",
-        description: `Documento ${numeroData} creado correctamente`,
-      });
-
-      // Reset form
-      setSelectedTipo('');
-      setSelectedCliente('');
-    } catch (error: any) {
-      console.error('Error creating document:', error);
-      toast({
-        title: "Error",
-        description: "Error al crear el documento",
-        variant: "destructive",
-      });
-    }
-  };
+  const filteredDocumentos = documentos.filter(doc => {
+    const matchesSearch = doc.clientes?.nombre_empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.clientes?.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.numero_documento.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesTipo = !filtroTipo || doc.tipo_documento === filtroTipo;
+    
+    return matchesSearch && matchesTipo;
+  });
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -117,76 +95,150 @@ export default function Documentos() {
     <Layout>
       <div className="min-h-screen bg-muted/30">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center space-x-3 mb-6">
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <Link to="/">
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Volver
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold text-primary">Generación de Documentos</h1>
+                <p className="text-muted-foreground">Facturas, notas de entrega, recibos y más</p>
+              </div>
+            </div>
+            
+            <Link to="/configuracion">
+              <Button variant="outline">
+                Configurar Empresa
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-primary">Documentos</h1>
-              <p className="text-muted-foreground">Genera facturas, notas de entrega y salidas de almacén</p>
-            </div>
           </div>
 
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Crear Nuevo Documento
-              </CardTitle>
-              <CardDescription>
-                Selecciona el tipo de documento y cliente para comenzar
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Documento</label>
-                <Select value={selectedTipo} onValueChange={setSelectedTipo}>
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Buscar por cliente, RIF o número..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                <Select value={filtroTipo} onValueChange={setFiltroTipo}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tipo de documento" />
+                    <SelectValue placeholder="Todos los tipos" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Todos los tipos</SelectItem>
                     {TIPOS_DOCUMENTO.map((tipo) => (
                       <SelectItem key={tipo.value} value={tipo.value}>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{tipo.value}</Badge>
-                          {tipo.label}
-                        </div>
+                        {tipo.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Cliente</label>
-                <Select value={selectedCliente} onValueChange={setSelectedCliente}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{cliente.nombre_empresa}</span>
-                          <span className="text-sm text-muted-foreground">RIF: {cliente.rif}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFiltroTipo('');
+                  }}
+                >
+                  Limpiar Filtros
+                </Button>
               </div>
+            </CardContent>
+          </Card>
 
-              <Button 
-                onClick={handleCreateDocument}
-                disabled={!selectedTipo || !selectedCliente}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Crear Documento
-              </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Documentos ({filteredDocumentos.length})</CardTitle>
+              <CardDescription>
+                Módulo en desarrollo. Próximamente: creación de facturas, notas de entrega, recibos, salidas de almacén y notas de crédito.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <p>Cargando documentos...</p>
+              ) : filteredDocumentos.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No hay documentos generados aún
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Configure primero la información de su empresa y luego podrá generar documentos
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Número</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredDocumentos.map((documento) => (
+                        <TableRow key={documento.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{documento.numero_documento}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Control: {documento.numero_control_general}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                              {TIPOS_DOCUMENTO.find(t => t.value === documento.tipo_documento)?.label}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(documento.fecha_emision).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{documento.clientes?.nombre_empresa}</div>
+                              <div className="text-sm text-muted-foreground">{documento.clientes?.rif}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-mono font-bold">${documento.total.toFixed(2)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {documento.estado}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" size="sm" title="Descargar PDF">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="sm" title="Eliminar documento">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
