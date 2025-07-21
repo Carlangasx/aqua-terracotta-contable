@@ -82,7 +82,7 @@ export default function Documentos() {
       doc.clientes?.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.numero_documento.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesTipo = !filtroTipo || doc.tipo_documento === filtroTipo;
+    const matchesTipo = !filtroTipo || filtroTipo === 'all' || doc.tipo_documento === filtroTipo;
     
     return matchesSearch && matchesTipo;
   });
@@ -134,7 +134,7 @@ export default function Documentos() {
                     <SelectValue placeholder="Todos los tipos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los tipos</SelectItem>
+                    <SelectItem value="all">Todos los tipos</SelectItem>
                     {TIPOS_DOCUMENTO.map((tipo) => (
                       <SelectItem key={tipo.value} value={tipo.value}>
                         {tipo.label}
@@ -147,7 +147,7 @@ export default function Documentos() {
                   variant="outline" 
                   onClick={() => {
                     setSearchTerm('');
-                    setFiltroTipo('');
+                    setFiltroTipo('all');
                   }}
                 >
                   Limpiar Filtros
