@@ -47,16 +47,28 @@ interface DocumentData {
 function parseJsonField(field: string | any[]): any[] {
   if (typeof field === 'string') {
     try {
-      return JSON.parse(field);
+      const parsed = JSON.parse(field);
+      console.log('Successfully parsed JSON field:', parsed);
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       console.error('Error parsing JSON field:', e);
+      console.log('Field value was:', field);
       return [];
     }
   }
-  return Array.isArray(field) ? field : [];
+  if (Array.isArray(field)) {
+    console.log('Field is already an array:', field);
+    return field;
+  }
+  console.log('Field is neither string nor array, returning empty array. Field:', field);
+  return [];
 }
 
 function generateDocumentHTML(document: DocumentData): string {
+  console.log('Generating HTML for document:', document.id);
+  console.log('Raw productos field:', document.productos);
+  console.log('Raw extras field:', document.extras);
+
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: document.moneda || 'USD',
@@ -75,7 +87,7 @@ function generateDocumentHTML(document: DocumentData): string {
     }
   };
 
-  // Parse JSON fields properly
+  // Parse JSON fields properly with extra safety
   const productos = parseJsonField(document.productos);
   const extras = parseJsonField(document.extras);
 
@@ -85,21 +97,38 @@ function generateDocumentHTML(document: DocumentData): string {
   const subtotal = document.total / (1 - (document.descuento / 100));
   const descuentoAmount = subtotal * (document.descuento / 100);
   
-  // Combine all items
-  const allItems = [
-    ...productos.map((p: ProductoItem) => ({
-      descripcion: p.nombre,
-      cantidad: p.cantidad || 1,
-      precio_unitario: p.precio_unitario || 0,
-      subtotal: p.subtotal || 0
-    })),
-    ...extras.map((e: ExtraItem) => ({
-      descripcion: e.nombre || e.descripcion || `${e.tipo || 'Extra'}`,
-      cantidad: e.cantidad || 1,
-      precio_unitario: e.precio || 0,
-      subtotal: e.subtotal || e.precio || 0
-    }))
-  ];
+  // Combine all items with proper error handling
+  const allItems = [];
+  
+  // Add products
+  try {
+    productos.forEach((p: any) => {
+      allItems.push({
+        descripcion: p.nombre || p.descripcion || 'Producto sin nombre',
+        cantidad: p.cantidad || 1,
+        precio_unitario: p.precio_unitario || p.precio || 0,
+        subtotal: p.subtotal || 0
+      });
+    });
+  } catch (error) {
+    console.error('Error processing productos:', error);
+  }
+
+  // Add extras
+  try {
+    extras.forEach((e: any) => {
+      allItems.push({
+        descripcion: e.nombre || e.descripcion || `${e.tipo || 'Extra'}`,
+        cantidad: e.cantidad || 1,
+        precio_unitario: e.precio || 0,
+        subtotal: e.subtotal || e.precio || 0
+      });
+    });
+  } catch (error) {
+    console.error('Error processing extras:', error);
+  }
+
+  console.log('Final allItems:', allItems);
 
   return `
     <!DOCTYPE html>
@@ -373,19 +402,18 @@ function generateDocumentHTML(document: DocumentData): string {
                     </tr>
                 </thead>
                 <tbody>
-                    ${allItems.map(item => `
+                    ${allItems.length > 0 ? allItems.map(item => `
                         <tr>
                             <td>${item.descripcion}</td>
                             <td class="text-center">${item.cantidad}</td>
                             <td class="text-right">${formatCurrency(item.precio_unitario)}</td>
                             <td class="text-right">${formatCurrency(item.subtotal)}</td>
                         </tr>
-                    `).join('')}
-                    ${allItems.length === 0 ? `
+                    `).join('') : `
                         <tr>
                             <td colspan="4" class="text-center">No hay productos o servicios registrados</td>
                         </tr>
-                    ` : ''}
+                    `}
                 </tbody>
             </table>
 
