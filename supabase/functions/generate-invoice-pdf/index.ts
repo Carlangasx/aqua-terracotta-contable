@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -520,12 +521,38 @@ serve(async (req) => {
     // Generate HTML
     const html = generateDocumentHTML(document as DocumentData);
 
-    // Return the HTML directly 
-    return new Response(html, {
+    console.log('Generating PDF from HTML...');
+    
+    // Launch browser and generate PDF
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    // Generate PDF
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm',
+      },
+      printBackground: true,
+    });
+    
+    await browser.close();
+    
+    console.log('PDF generated successfully');
+
+    // Return the PDF as binary data
+    return new Response(pdfBuffer, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `inline; filename="${document.tipo_documento}-${document.numero_documento}.html"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${document.tipo_documento}-${document.numero_documento}.pdf"`,
       },
     });
 

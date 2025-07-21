@@ -105,25 +105,25 @@ export default function Documentos() {
         return;
       }
 
-      // Create a blob from the HTML response and convert to PDF view
-      const blob = new Blob([data], { type: 'text/html' });
+      // Create blob from PDF data and download it
+      const blob = new Blob([data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
-      // Open in new window for better user experience
-      const newWindow = window.open(url, '_blank', 'width=800,height=600');
+      // Create a temporary link to download the file
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${documento.tipo_documento}-${documento.numero_documento}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
-      // Clean up after a delay
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 30000); // 30 seconds
+      // Clean up the URL
+      URL.revokeObjectURL(url);
       
-      if (!newWindow) {
-        toast({
-          title: "Advertencia",
-          description: "Por favor permite las ventanas emergentes para descargar el PDF",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "PDF descargado",
+        description: "El archivo PDF se ha descargado correctamente",
+      });
       
     } catch (error) {
       console.error('Error downloading PDF:', error);
