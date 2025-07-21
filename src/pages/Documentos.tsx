@@ -105,7 +105,7 @@ export default function Documentos() {
         return;
       }
 
-      // Create blob from PDF data and download it
+      // Create blob from PDF binary data and download it
       const blob = new Blob([data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
