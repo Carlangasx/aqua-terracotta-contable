@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, ArrowLeft, Trash2, Calculator, FileText, Save, Download } from 'lucide-react';
+import CACForm from '@/components/CACForm';
 
 interface Cliente {
   id: string;
@@ -45,7 +46,8 @@ const TIPOS_DOCUMENTO = [
   { "label": "Nota de entrega", "value": "NDE" },
   { "label": "Salida de almacén", "value": "SAL" },
   { "label": "Recibo", "value": "REC" },
-  { "label": "Nota de crédito", "value": "NCRE" }
+  { "label": "Nota de crédito", "value": "NCRE" },
+  { "label": "Certificado de Análisis de Calidad", "value": "CAC" }
 ];
 
 const TIPOS_EXTRAS = [
@@ -81,6 +83,10 @@ export default function DocumentosNuevo() {
   // Modal states
   const [mostrarProductos, setMostrarProductos] = useState(false);
   const [mostrarExtras, setMostrarExtras] = useState(false);
+  
+  // CAC states
+  const [cacData, setCacData] = useState<any>(null);
+  const [cacFormValid, setCacFormValid] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -235,13 +241,26 @@ export default function DocumentosNuevo() {
   const total = subtotal - montoDescuento;
 
   const guardarDocumento = async () => {
-    if (!tipoDocumento || !clienteId || lineas.length === 0) {
-      toast({
-        title: "Error",
-        description: "Complete todos los campos requeridos",
-        variant: "destructive",
-      });
-      return;
+    // Validación específica para CAC
+    if (tipoDocumento === 'CAC') {
+      if (!clienteId || !cacFormValid || !cacData) {
+        toast({
+          title: "Error",
+          description: "Complete todos los campos requeridos del CAC",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // Validación para otros documentos
+      if (!tipoDocumento || !clienteId || lineas.length === 0) {
+        toast({
+          title: "Error",
+          description: "Complete todos los campos requeridos",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setSaving(true);
@@ -257,45 +276,154 @@ export default function DocumentosNuevo() {
       
       if (controlError) throw controlError;
 
-      // Preparar datos del documento
-      const documentoData = {
-        user_id: user?.id,
-        tipo_documento: tipoDocumento,
-        numero_documento: numeroData,
-        numero_control_general: controlData,
-        cliente_id: clienteId,
-        fecha_emision: fechaEmision,
-        productos: JSON.stringify(lineas.filter(l => l.tipo === 'producto').map(l => ({
-          nombre: l.nombre,
-          precio: l.precio,
-          cantidad: l.cantidad,
-          subtotal: l.subtotal,
-          producto_id: l.producto_id
-        }))),
-        extras: JSON.stringify(lineas.filter(l => l.tipo === 'extra').map(l => ({
-          nombre: l.nombre,
-          precio: l.precio,
-          cantidad: l.cantidad,
-          subtotal: l.subtotal
-        }))),
-        descuento: descuento,
-        total: total,
-        condiciones_pago: condicionesPago,
-        observaciones: observaciones,
-        moneda: 'USD',
-        estado: 'emitido'
-      };
+      let documentData: any;
+      let documentId: number;
 
-      const { data, error } = await supabase
-        .from('documentos_generados')
-        .insert([documentoData])
-        .select()
-        .single();
+      if (tipoDocumento === 'CAC') {
+        // Manejo específico para CAC
+        documentData = {
+          user_id: user?.id,
+          tipo_documento: tipoDocumento,
+          numero_documento: numeroData,
+          numero_control_general: controlData,
+          cliente_id: clienteId,
+          fecha_emision: fechaEmision,
+          documento_origen_id: parseInt(cacData.documentoOrigenId),
+          codificacion: cacData.codificacion,
+          revision: cacData.revision,
+          fecha_caducidad: cacData.fechaCaducidad,
+          observaciones: cacData.observaciones,
+          moneda: 'USD',
+          estado: 'emitido',
+          productos: JSON.stringify([]),
+          extras: JSON.stringify([]),
+          total: 0,
+          descuento: 0
+        };
 
-      if (error) throw error;
+        // Insertar documento principal
+        const { data, error } = await supabase
+          .from('documentos_generados')
+          .insert([documentData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        documentId = data.id;
+
+        // Insertar datos específicos de CAC
+        const cacResultados = {
+          user_id: user?.id,
+          documento_id: documentId,
+          ancho_real: cacData.anchoReal,
+          alto_real: cacData.altoReal,
+          profundidad_real: cacData.profundidadReal,
+          sustrato: cacData.sustrato,
+          calibre: cacData.calibre,
+          colores: cacData.colores,
+          barniz: cacData.barniz,
+          plastificado: cacData.plastificado,
+          troquelado: cacData.troquelado,
+          empaquetado: cacData.empaquetado,
+          pegado: cacData.pegado,
+          n_paquetes: cacData.nPaquetes
+        };
+
+        const { error: cacError } = await supabase
+          .from('cac_resultados')
+          .insert([cacResultados]);
+
+        if (cacError) throw cacError;
+
+        // Subir archivos a Storage
+        if (cacData.arteFinalFile || cacData.cotizacionFile) {
+          const archivos = [];
+          
+          if (cacData.arteFinalFile) {
+            const fileName = `${user?.id}/${documentId}/arte_final_${Date.now()}.pdf`;
+            const { error: uploadError } = await supabase.storage
+              .from('cac-archivos')
+              .upload(fileName, cacData.arteFinalFile);
+
+            if (!uploadError) {
+              archivos.push({
+                user_id: user?.id,
+                documento_id: documentId,
+                tipo_archivo: 'arte_final',
+                nombre_archivo: cacData.arteFinalFile.name,
+                url_archivo: fileName
+              });
+            }
+          }
+
+          if (cacData.cotizacionFile) {
+            const fileName = `${user?.id}/${documentId}/cotizacion_${Date.now()}.pdf`;
+            const { error: uploadError } = await supabase.storage
+              .from('cac-archivos')
+              .upload(fileName, cacData.cotizacionFile);
+
+            if (!uploadError) {
+              archivos.push({
+                user_id: user?.id,
+                documento_id: documentId,
+                tipo_archivo: 'cotizacion',
+                nombre_archivo: cacData.cotizacionFile.name,
+                url_archivo: fileName
+              });
+            }
+          }
+
+          if (archivos.length > 0) {
+            const { error: archivosError } = await supabase
+              .from('cac_archivos')
+              .insert(archivos);
+
+            if (archivosError) console.error('Error saving files:', archivosError);
+          }
+        }
+
+      } else {
+        // Preparar datos del documento normal
+        documentData = {
+          user_id: user?.id,
+          tipo_documento: tipoDocumento,
+          numero_documento: numeroData,
+          numero_control_general: controlData,
+          cliente_id: clienteId,
+          fecha_emision: fechaEmision,
+          productos: JSON.stringify(lineas.filter(l => l.tipo === 'producto').map(l => ({
+            nombre: l.nombre,
+            precio: l.precio,
+            cantidad: l.cantidad,
+            subtotal: l.subtotal,
+            producto_id: l.producto_id
+          }))),
+          extras: JSON.stringify(lineas.filter(l => l.tipo === 'extra').map(l => ({
+            nombre: l.nombre,
+            precio: l.precio,
+            cantidad: l.cantidad,
+            subtotal: l.subtotal
+          }))),
+          descuento: descuento,
+          total: total,
+          condiciones_pago: condicionesPago,
+          observaciones: observaciones,
+          moneda: 'USD',
+          estado: 'emitido'
+        };
+
+        const { data, error } = await supabase
+          .from('documentos_generados')
+          .insert([documentData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        documentId = data.id;
+      }
 
       // Update state immediately after successful save
-      setSavedDocumentId(data.id);
+      setSavedDocumentId(documentId);
       setDocumentData({
         tipoDocumento,
         numeroDocumento: numeroData
@@ -303,10 +431,10 @@ export default function DocumentosNuevo() {
 
       toast({
         title: "Éxito",
-        description: `${TIPOS_DOCUMENTO.find(t => t.value === tipoDocumento)?.label} creada correctamente`,
+        description: `${TIPOS_DOCUMENTO.find(t => t.value === tipoDocumento)?.label} creado correctamente`,
       });
 
-      console.log('Document saved with ID:', data.id);
+      console.log('Document saved with ID:', documentId);
 
     } catch (error: any) {
       console.error('Error saving document:', error);
@@ -420,135 +548,155 @@ export default function DocumentosNuevo() {
                 </CardContent>
               </Card>
 
-              {/* Productos y Servicios */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Productos y Servicios</CardTitle>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setMostrarProductos(!mostrarProductos)}
-                      disabled={!clienteId}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Agregar Producto
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setMostrarExtras(!mostrarExtras)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Agregar Extra
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Lista de productos disponibles */}
-                  {mostrarProductos && (
-                    <div className="mb-4 p-4 border rounded-lg bg-muted">
-                      <h4 className="font-medium mb-2">Productos Elaborados</h4>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {productosFiltrados.map((producto) => (
-                          <div
-                            key={producto.id}
-                            className="flex justify-between items-center p-2 bg-background rounded cursor-pointer hover:bg-accent"
-                            onClick={() => agregarProducto(producto)}
-                          >
-                            <div>
-                              <p className="font-medium">{producto.nombre_producto}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {producto.clientes?.nombre_empresa}
-                              </p>
+              {/* Renderizado condicional según tipo de documento */}
+              {tipoDocumento === 'CAC' ? (
+                // Formulario específico para CAC
+                clienteId ? (
+                  <CACForm 
+                    clienteId={clienteId}
+                    onDataChange={setCacData}
+                    onValidityChange={setCacFormValid}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-muted-foreground text-center">
+                        Seleccione un cliente para continuar con el CAC
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
+              ) : (
+                // Formulario normal para otros documentos
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Productos y Servicios</CardTitle>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMostrarProductos(!mostrarProductos)}
+                        disabled={!clienteId}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Producto
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMostrarExtras(!mostrarExtras)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Extra
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Lista de productos disponibles */}
+                    {mostrarProductos && (
+                      <div className="mb-4 p-4 border rounded-lg bg-muted">
+                        <h4 className="font-medium mb-2">Productos Elaborados</h4>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {productosFiltrados.map((producto) => (
+                            <div
+                              key={producto.id}
+                              className="flex justify-between items-center p-2 bg-background rounded cursor-pointer hover:bg-accent"
+                              onClick={() => agregarProducto(producto)}
+                            >
+                              <div>
+                                <p className="font-medium">{producto.nombre_producto}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {producto.clientes?.nombre_empresa}
+                                </p>
+                              </div>
+                              <Plus className="h-4 w-4" />
                             </div>
-                            <Plus className="h-4 w-4" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Lista de extras disponibles */}
-                  {mostrarExtras && (
-                    <div className="mb-4 p-4 border rounded-lg bg-muted">
-                      <h4 className="font-medium mb-2">Extras Disponibles</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {TIPOS_EXTRAS.map((extra) => (
-                          <Button
-                            key={extra.value}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => agregarExtra(extra.value, extra.label)}
-                          >
-                            {extra.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tabla de líneas */}
-                  {lineas.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Descripción</TableHead>
-                            <TableHead>Precio</TableHead>
-                            <TableHead>Cantidad</TableHead>
-                            <TableHead>Subtotal</TableHead>
-                            <TableHead></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {lineas.map((linea) => (
-                            <TableRow key={linea.id}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium">{linea.nombre}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {linea.tipo === 'producto' ? 'Producto' : 'Extra'}
-                                  </p>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={linea.precio}
-                                  onChange={(e) => actualizarLinea(linea.id, 'precio', parseFloat(e.target.value) || 0)}
-                                  className="w-20"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  value={linea.cantidad}
-                                  onChange={(e) => actualizarLinea(linea.id, 'cantidad', parseInt(e.target.value) || 0)}
-                                  className="w-20"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <span className="font-mono">${linea.subtotal.toFixed(2)}</span>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => eliminarLinea(linea.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
                           ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lista de extras disponibles */}
+                    {mostrarExtras && (
+                      <div className="mb-4 p-4 border rounded-lg bg-muted">
+                        <h4 className="font-medium mb-2">Extras Disponibles</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {TIPOS_EXTRAS.map((extra) => (
+                            <Button
+                              key={extra.value}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => agregarExtra(extra.value, extra.label)}
+                            >
+                              {extra.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tabla de líneas */}
+                    {lineas.length > 0 && (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Descripción</TableHead>
+                              <TableHead>Precio</TableHead>
+                              <TableHead>Cantidad</TableHead>
+                              <TableHead>Subtotal</TableHead>
+                              <TableHead></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {lineas.map((linea) => (
+                              <TableRow key={linea.id}>
+                                <TableCell>
+                                  <div>
+                                    <p className="font-medium">{linea.nombre}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {linea.tipo === 'producto' ? 'Producto' : 'Extra'}
+                                    </p>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={linea.precio}
+                                    onChange={(e) => actualizarLinea(linea.id, 'precio', parseFloat(e.target.value) || 0)}
+                                    className="w-20"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    value={linea.cantidad}
+                                    onChange={(e) => actualizarLinea(linea.id, 'cantidad', parseInt(e.target.value) || 0)}
+                                    className="w-20"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <span className="font-mono">${linea.subtotal.toFixed(2)}</span>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => eliminarLinea(linea.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Panel Lateral */}
@@ -638,7 +786,12 @@ export default function DocumentosNuevo() {
                   <div className="space-y-2">
                     <Button
                       onClick={guardarDocumento}
-                      disabled={saving || !tipoDocumento || !clienteId || lineas.length === 0}
+                      disabled={
+                        saving || 
+                        !tipoDocumento || 
+                        !clienteId || 
+                        (tipoDocumento === 'CAC' ? !cacFormValid : lineas.length === 0)
+                      }
                       className="w-full"
                     >
                       <Save className="h-4 w-4 mr-2" />

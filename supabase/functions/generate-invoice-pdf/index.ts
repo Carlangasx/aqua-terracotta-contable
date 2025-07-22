@@ -72,6 +72,7 @@ function getDocumentTitle(tipo: string): string {
     case 'REC': return 'RECIBO';
     case 'SAL': return 'SALIDA DE ALMACÉN';
     case 'NCRE': return 'NOTA DE CRÉDITO';
+    case 'CAC': return 'CERTIFICADO DE ANÁLISIS DE CALIDAD';
     default: return 'DOCUMENTO';
   }
 }
@@ -99,8 +100,8 @@ serve(async (req) => {
 
     console.log('Fetching document data for ID:', documentId);
 
-    // Fetch document data with client information
-    const { data: document, error } = await supabase
+    // Fetch document data with client information and CAC data if needed
+    let query = supabase
       .from('documentos_generados')
       .select(`
         *,
@@ -112,8 +113,32 @@ serve(async (req) => {
           correo
         )
       `)
-      .eq('id', documentId)
-      .single();
+      .eq('id', documentId);
+
+    const { data: document, error } = await query.single();
+
+    if (error) {
+      console.error('Error fetching document:', error);
+      throw new Error('Error al obtener los datos del documento');
+    }
+
+    if (!document) {
+      throw new Error('Documento no encontrado');
+    }
+
+    // Fetch CAC data if document type is CAC
+    let cacData = null;
+    if (document.tipo_documento === 'CAC') {
+      const { data: cacResult, error: cacError } = await supabase
+        .from('cac_resultados')
+        .select('*')
+        .eq('documento_id', documentId)
+        .single();
+
+      if (!cacError && cacResult) {
+        cacData = cacResult;
+      }
+    }
 
     if (error) {
       console.error('Error fetching document:', error);
@@ -150,8 +175,21 @@ serve(async (req) => {
     doc.text(`N° ${document.numero_documento}`, 150, 35);
     doc.text(`Fecha: ${new Date(document.fecha_emision).toLocaleDateString('es-VE')}`, 150, 45);
     
+    if (document.tipo_documento === 'CAC') {
+      // CAC-specific header information
+      if (document.codificacion) {
+        doc.text(`Codificación: ${document.codificacion}`, 150, 55);
+      }
+      if (document.revision) {
+        doc.text(`Revisión: ${document.revision}`, 150, 65);
+      }
+      if (document.fecha_caducidad) {
+        doc.text(`Vigencia hasta: ${new Date(document.fecha_caducidad).toLocaleDateString('es-VE')}`, 150, 75);
+      }
+    }
+    
     // Add client info
-    let yPos = 65;
+    let yPos = document.tipo_documento === 'CAC' ? 85 : 65;
     doc.setFontSize(14);
     doc.text('DATOS DEL CLIENTE', 20, yPos);
     
@@ -165,7 +203,40 @@ serve(async (req) => {
     yPos += 7;
     doc.text(`Teléfono: ${document.clientes.telefono_empresa || 'N/A'}`, 20, yPos);
     
-    // Add products table
+    if (document.tipo_documento === 'CAC' && cacData) {
+      // Add CAC-specific content
+      yPos += 20;
+      doc.setFontSize(12);
+      doc.text('RESULTADOS DEL ANÁLISIS', 20, yPos);
+      
+      yPos += 15;
+      doc.setFontSize(10);
+      doc.text(`Dimensiones: ${cacData.ancho_real}mm x ${cacData.alto_real}mm x ${cacData.profundidad_real}mm`, 20, yPos);
+      yPos += 7;
+      doc.text(`Sustrato: ${cacData.sustrato}`, 20, yPos);
+      yPos += 7;
+      if (cacData.colores) doc.text(`Colores: ${cacData.colores}`, 20, yPos), yPos += 7;
+      if (cacData.barniz) doc.text(`Barniz: ${cacData.barniz}`, 20, yPos), yPos += 7;
+      
+      yPos += 10;
+      doc.text('FIRMA DE CONFORMIDAD:', 20, yPos);
+      yPos += 20;
+      doc.line(20, yPos, 90, yPos);
+      doc.text('Cliente', 40, yPos + 10);
+      
+      doc.line(120, yPos, 190, yPos);
+      doc.text('Control de Calidad', 140, yPos + 10);
+      
+      return new Response(doc.output('arraybuffer'), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="CAC-${document.numero_documento}.pdf"`,
+        },
+      });
+    }
+    
+    // Add products table for non-CAC documents
     yPos += 20;
     doc.setFontSize(12);
     doc.text('PRODUCTOS/SERVICIOS', 20, yPos);

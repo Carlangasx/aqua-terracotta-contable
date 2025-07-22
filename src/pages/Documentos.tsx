@@ -29,11 +29,12 @@ interface DocumentoGenerado {
 }
 
 const TIPOS_DOCUMENTO = [
-  { value: 'factura', label: 'Factura' },
-  { value: 'nota_entrega', label: 'Nota de Entrega' },
-  { value: 'recibo', label: 'Recibo' },
-  { value: 'salida_almacen', label: 'Salida de Almacén' },
-  { value: 'nota_credito', label: 'Nota de Crédito' }
+  { value: 'FACT', label: 'Factura' },
+  { value: 'NDE', label: 'Nota de Entrega' },
+  { value: 'REC', label: 'Recibo' },
+  { value: 'SAL', label: 'Salida de Almacén' },
+  { value: 'NCRE', label: 'Nota de Crédito' },
+  { value: 'CAC', label: 'Certificado de Análisis de Calidad' }
 ];
 
 export default function Documentos() {
