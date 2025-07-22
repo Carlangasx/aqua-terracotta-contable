@@ -65,7 +65,7 @@ type HistorialElaboracion = {
   id: string;
   producto_id: string;
   fecha: string;
-  tipo_documento_origen: 'FACT' | 'NDE' | 'SAL';
+  tipo_documento_origen: string;
   numero_documento_origen: string | null;
   documento_generado_id: number | null;
   precio_cliente_usd: number | null;
@@ -73,16 +73,7 @@ type HistorialElaboracion = {
   cac_id: number | null;
   observaciones: string | null;
   created_at: string;
-  documentos_generados?: {
-    numero_documento: string;
-    url_pdf: string | null;
-    fecha_emision: string;
-  };
-  cac_documentos?: {
-    numero_documento: string;
-    url_pdf: string | null;
-    fecha_emision: string;
-  };
+  documentos_generados?: any;
 };
 
 type DocumentoGenerado = {
@@ -225,18 +216,13 @@ const ProductosElaborados = () => {
             numero_documento,
             url_pdf,
             fecha_emision
-          ),
-          cac_documentos:cac_id (
-            numero_documento,
-            url_pdf,
-            fecha_emision
           )
         `)
         .eq("producto_id", productoId)
         .order("fecha", { ascending: false });
 
       if (error) throw error;
-      setHistorialElaboraciones(data || []);
+      setHistorialElaboraciones((data as HistorialElaboracion[]) || []);
     } catch (error) {
       console.error("Error fetching historial elaboraciones:", error);
       toast.error("Error al cargar el historial de elaboraciones");
@@ -1332,14 +1318,6 @@ const ProductosElaborados = () => {
                                         <a href={elaboracion.arte_final_pdf_url} target="_blank" rel="noopener noreferrer">
                                           <Eye className="h-4 w-4 mr-1" />
                                           Arte
-                                        </a>
-                                      </Button>
-                                    )}
-                                    {elaboracion.cac_documentos?.url_pdf && (
-                                      <Button size="sm" variant="secondary" asChild>
-                                        <a href={elaboracion.cac_documentos.url_pdf} target="_blank" rel="noopener noreferrer">
-                                          <ExternalLink className="h-4 w-4 mr-1" />
-                                          CAC
                                         </a>
                                       </Button>
                                     )}
