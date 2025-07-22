@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import ImportarProductos from "@/components/ImportarProductos";
 
 type ProductoElaborado = {
   id: string;
@@ -429,6 +430,7 @@ const ProductosElaborados = () => {
             </p>
           </div>
           <div className="flex space-x-2">
+            <ImportarProductos onImportComplete={fetchProductos} />
             <Button 
               variant="outline" 
               onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
