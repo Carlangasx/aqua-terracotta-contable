@@ -49,20 +49,12 @@ function parseJsonField(field: string | any[]): any[] {
   if (typeof field === 'string') {
     try {
       const parsed = JSON.parse(field);
-      console.log('Successfully parsed JSON field:', parsed);
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
-      console.error('Error parsing JSON field:', e);
-      console.log('Field value was:', field);
       return [];
     }
   }
-  if (Array.isArray(field)) {
-    console.log('Field is already an array:', field);
-    return field;
-  }
-  console.log('Field is neither string nor array, returning empty array. Field:', field);
-  return [];
+  return Array.isArray(field) ? field : [];
 }
 
 function getDocumentTitle(tipo: string): string {
@@ -73,35 +65,29 @@ function getDocumentTitle(tipo: string): string {
     case 'SAL': return 'SALIDA DE ALMACÉN';
     case 'NCRE': return 'NOTA DE CRÉDITO';
     case 'CAC': return 'CERTIFICADO DE ANÁLISIS DE CALIDAD';
-    default: return 'DOCUMENTO';
+    default: return 'COTIZACIÓN';
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('PDF generation function v2 started');
-    
     const { documentId } = await req.json();
 
     if (!documentId) {
       throw new Error('ID de documento requerido');
     }
 
-    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Fetching document data for ID:', documentId);
-
-    // Fetch document data with client information and CAC data if needed
-    let query = supabase
+    // Fetch document data
+    const { data: document, error } = await supabase
       .from('documentos_generados')
       .select(`
         *,
@@ -113,145 +99,97 @@ serve(async (req) => {
           correo
         )
       `)
-      .eq('id', documentId);
+      .eq('id', documentId)
+      .single();
 
-    const { data: document, error } = await query.single();
-
-    if (error) {
-      console.error('Error fetching document:', error);
-      throw new Error('Error al obtener los datos del documento');
-    }
-
-    if (!document) {
+    if (error || !document) {
       throw new Error('Documento no encontrado');
     }
 
-    // Fetch CAC data if document type is CAC
-    let cacData = null;
-    if (document.tipo_documento === 'CAC') {
-      const { data: cacResult, error: cacError } = await supabase
-        .from('cac_resultados')
-        .select('*')
-        .eq('documento_id', documentId)
-        .single();
+    // Fetch company configuration
+    const { data: empresa } = await supabase
+      .from('configuracion_empresa')
+      .select('*')
+      .single();
 
-      if (!cacError && cacResult) {
-        cacData = cacResult;
-      }
-    }
-
-    if (error) {
-      console.error('Error fetching document:', error);
-      throw new Error('Error al obtener los datos del documento');
-    }
-
-    if (!document) {
-      throw new Error('Documento no encontrado');
-    }
-
-    console.log('Document data retrieved:', { 
-      id: document.id, 
-      numero: document.numero_documento,
-      productos: typeof document.productos,
-      extras: typeof document.extras 
-    });
-
-    console.log('Generating PDF using jsPDF...');
+    // Create PDF with LITOARTE format
+    const doc = new jsPDF('p', 'mm', 'a4');
     
-    // Create new PDF document
-    const doc = new jsPDF();
+    // Set default font
+    doc.setFont('helvetica', 'normal');
     
-    // Set font
-    doc.setFont('helvetica');
+    // HEADER SECTION - Company Info
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LITOARTE C.A.', 20, 25);
     
-    // Add header
-    doc.setFontSize(20);
-    doc.setTextColor(22, 163, 74); // Green color
-    doc.text('PrintMatch PRO', 20, 25);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(getDocumentTitle(document.tipo_documento), 150, 25);
-    doc.text(`N° ${document.numero_documento}`, 150, 35);
-    doc.text(`Fecha: ${new Date(document.fecha_emision).toLocaleDateString('es-VE')}`, 150, 45);
-    
-    if (document.tipo_documento === 'CAC') {
-      // CAC-specific header information
-      if (document.codificacion) {
-        doc.text(`Codificación: ${document.codificacion}`, 150, 55);
-      }
-      if (document.revision) {
-        doc.text(`Revisión: ${document.revision}`, 150, 65);
-      }
-      if (document.fecha_caducidad) {
-        doc.text(`Vigencia hasta: ${new Date(document.fecha_caducidad).toLocaleDateString('es-VE')}`, 150, 75);
-      }
-    }
-    
-    // Add client info
-    let yPos = document.tipo_documento === 'CAC' ? 85 : 65;
-    doc.setFontSize(14);
-    doc.text('DATOS DEL CLIENTE', 20, yPos);
-    
-    yPos += 10;
     doc.setFontSize(10);
-    doc.text(`Empresa: ${document.clientes.nombre_empresa}`, 20, yPos);
-    yPos += 7;
-    doc.text(`RIF: ${document.clientes.rif}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Dirección: ${document.clientes.direccion_fiscal || 'N/A'}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Teléfono: ${document.clientes.telefono_empresa || 'N/A'}`, 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text('RIF: J-29584577-0', 20, 32);
+    doc.text('Reg. Mercantil 1° Circunscripción Judicial del Estado Miranda', 20, 38);
+    doc.text('Tomo: 65-A-Pro, Expediente: 201.569', 20, 44);
+    doc.text('Dirección: Calle José Ignacio Liendo, Qta. Litoarte, Los Teques', 20, 50);
+    doc.text('Estado Miranda - Venezuela', 20, 56);
+    doc.text('Telf: 0212-322-2590 / 0212-322-1048', 20, 62);
+    doc.text('Email: ventas@litoarte.com.ve', 20, 68);
+
+    // DOCUMENT TITLE AND NUMBER
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${getDocumentTitle(document.tipo_documento)} No.`, 120, 30);
+    doc.text(document.numero_documento, 120, 38);
     
-    if (document.tipo_documento === 'CAC' && cacData) {
-      // Add CAC-specific content
-      yPos += 20;
-      doc.setFontSize(12);
-      doc.text('RESULTADOS DEL ANÁLISIS', 20, yPos);
-      
-      yPos += 15;
-      doc.setFontSize(10);
-      doc.text(`Dimensiones: ${cacData.ancho_real}mm x ${cacData.alto_real}mm x ${cacData.profundidad_real}mm`, 20, yPos);
-      yPos += 7;
-      doc.text(`Sustrato: ${cacData.sustrato}`, 20, yPos);
-      yPos += 7;
-      if (cacData.colores) doc.text(`Colores: ${cacData.colores}`, 20, yPos), yPos += 7;
-      if (cacData.barniz) doc.text(`Barniz: ${cacData.barniz}`, 20, yPos), yPos += 7;
-      
-      yPos += 10;
-      doc.text('FIRMA DE CONFORMIDAD:', 20, yPos);
-      yPos += 20;
-      doc.line(20, yPos, 90, yPos);
-      doc.text('Cliente', 40, yPos + 10);
-      
-      doc.line(120, yPos, 190, yPos);
-      doc.text('Control de Calidad', 140, yPos + 10);
-      
-      return new Response(doc.output('arraybuffer'), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="CAC-${document.numero_documento}.pdf"`,
-        },
-      });
-    }
-    
-    // Add products table for non-CAC documents
-    yPos += 20;
+    // Date
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fecha: ${new Date(document.fecha_emision).toLocaleDateString('es-VE')}`, 120, 45);
+
+    // CLIENT SECTION
+    let yPos = 85;
     doc.setFontSize(12);
-    doc.text('PRODUCTOS/SERVICIOS', 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CLIENTE:', 20, yPos);
     
-    yPos += 10;
+    yPos += 8;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Empresa: ${document.clientes.nombre_empresa}`, 20, yPos);
+    yPos += 6;
+    doc.text(`RIF: ${document.clientes.rif}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Dirección: ${document.clientes.direccion_fiscal || 'N/A'}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Teléfono: ${document.clientes.telefono_empresa || 'N/A'}`, 20, yPos);
+
+    // PRODUCTS TABLE
+    yPos += 15;
+    
+    // Table headers with background
+    const tableStartY = yPos;
+    const rowHeight = 8;
+    const colWidths = [20, 80, 25, 25, 30];
+    const tableWidth = colWidths.reduce((sum, width) => sum + width, 0);
+    
+    // Header background (light gray)
+    doc.setFillColor(230, 230, 230);
+    doc.rect(20, yPos, tableWidth, rowHeight, 'F');
+    
+    // Header borders
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.3);
+    doc.rect(20, yPos, tableWidth, rowHeight);
+    
+    // Header text
     doc.setFontSize(9);
-    doc.text('Descripción', 20, yPos);
-    doc.text('Cant.', 120, yPos);
-    doc.text('Precio Unit.', 140, yPos);
-    doc.text('Subtotal', 170, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CANT.', 22, yPos + 5);
+    doc.text('DESCRIPCIÓN', 42, yPos + 5);
+    doc.text('P. UNIT.', 127, yPos + 5);
+    doc.text('P. TOTAL', 155, yPos + 5);
     
-    yPos += 5;
-    doc.line(20, yPos, 190, yPos); // Horizontal line
+    yPos += rowHeight;
     
-    // Parse and add items
+    // Parse products and extras
     const productos = parseJsonField(document.productos);
     const extras = parseJsonField(document.extras);
     
@@ -274,66 +212,97 @@ serve(async (req) => {
       });
     });
     
-    yPos += 7;
-    allItems.forEach((item) => {
-      if (yPos > 270) { // Check if we need a new page
-        doc.addPage();
-        yPos = 25;
+    // Table rows
+    doc.setFont('helvetica', 'normal');
+    allItems.forEach((item, index) => {
+      // Alternate row background
+      if (index % 2 === 1) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(20, yPos, tableWidth, rowHeight, 'F');
       }
       
-      doc.text(item.descripcion.substring(0, 50), 20, yPos);
-      doc.text(item.cantidad.toString(), 120, yPos);
-      doc.text(`$${item.precio_unitario.toFixed(2)}`, 140, yPos);
-      doc.text(`$${item.subtotal.toFixed(2)}`, 170, yPos);
-      yPos += 7;
+      // Row border
+      doc.rect(20, yPos, tableWidth, rowHeight);
+      
+      // Cell content
+      doc.text(item.cantidad.toString(), 22, yPos + 5);
+      
+      // Wrap description text if too long
+      const description = item.descripcion.length > 45 ? 
+        item.descripcion.substring(0, 45) + '...' : item.descripcion;
+      doc.text(description, 42, yPos + 5);
+      
+      doc.text(`$${item.precio_unitario.toFixed(2)}`, 127, yPos + 5);
+      doc.text(`$${item.subtotal.toFixed(2)}`, 155, yPos + 5);
+      
+      yPos += rowHeight;
     });
     
-    // Add totals
+    // TOTALS SECTION
     yPos += 10;
-    doc.line(140, yPos, 190, yPos); // Horizontal line
-    yPos += 7;
     
     const subtotal = document.total / (1 - (document.descuento / 100));
     const descuentoAmount = subtotal * (document.descuento / 100);
+    const iva = document.total * 0.16; // 16% IVA
+    const totalConIva = document.total + iva;
     
-    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 140, yPos);
-    yPos += 7;
+    // Totals box
+    const totalsX = 130;
+    const totalsWidth = 60;
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.text('SUB-TOTAL:', totalsX, yPos);
+    doc.text(`$${subtotal.toFixed(2)}`, totalsX + 35, yPos);
+    yPos += 6;
     
     if (document.descuento > 0) {
-      doc.text(`Descuento (${document.descuento}%): -$${descuentoAmount.toFixed(2)}`, 140, yPos);
-      yPos += 7;
+      doc.text(`DESCUENTO (${document.descuento}%):`, totalsX, yPos);
+      doc.text(`-$${descuentoAmount.toFixed(2)}`, totalsX + 35, yPos);
+      yPos += 6;
     }
     
-    doc.setFontSize(11);
-    doc.text(`TOTAL: $${document.total.toFixed(2)}`, 140, yPos);
+    doc.text('I.V.A. (16%): ', totalsX, yPos);
+    doc.text(`$${iva.toFixed(2)}`, totalsX + 35, yPos);
+    yPos += 6;
     
-    // Add payment terms and notes
-    yPos += 15;
-    doc.setFontSize(10);
-    doc.text('Condiciones de Pago:', 20, yPos);
-    yPos += 7;
-    doc.text(document.condiciones_pago || 'Contado', 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL:', totalsX, yPos);
+    doc.text(`$${totalConIva.toFixed(2)}`, totalsX + 35, yPos);
     
-    if (document.observaciones) {
-      yPos += 10;
-      doc.text('Observaciones:', 20, yPos);
-      yPos += 7;
-      doc.text(document.observaciones.substring(0, 100), 20, yPos);
-    }
-    
-    // Add footer
+    // FOOTER SECTION
     yPos += 20;
-    doc.setFontSize(8);
-    doc.text('Generado por PrintMatch PRO', 20, yPos);
-    doc.text('DOCUMENTO SIN VALIDEZ FISCAL', 20, yPos + 7);
     
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    // Validity and conditions
+    doc.text('Esta cotización tiene una vigencia de 15 días.', 20, yPos);
+    yPos += 6;
+    doc.text(`Condiciones de Pago: ${document.condiciones_pago}`, 20, yPos);
+    yPos += 10;
+    
+    // Signature section
+    doc.text('Firma y Sello:', 20, yPos);
+    doc.line(20, yPos + 15, 90, yPos + 15); // Signature line
+    
+    // Company footer
+    yPos += 25;
+    doc.setFontSize(8);
+    doc.text('LITOARTE C.A. - Especialistas en Impresión y Packaging', 20, yPos);
+    yPos += 4;
+    doc.text('www.litoarte.com.ve', 20, yPos);
+    
+    // Legal footer
+    yPos = 280; // Bottom of page
+    doc.setFontSize(7);
+    doc.text('Documento generado por PrintMatch PRO', 20, yPos);
+
     // Generate PDF buffer
     const pdfArrayBuffer = doc.output('arraybuffer');
     const pdfBuffer = new Uint8Array(pdfArrayBuffer);
-    
-    console.log('PDF generated successfully with jsPDF, size:', pdfBuffer.length);
 
-    // Return the PDF as binary data
     return new Response(pdfBuffer, {
       headers: {
         ...corsHeaders,
@@ -343,7 +312,7 @@ serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error('Error in generate-invoice-pdf function:', error);
+    console.error('Error generating PDF:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
