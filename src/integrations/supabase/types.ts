@@ -500,6 +500,79 @@ export type Database = {
           },
         ]
       }
+      historial_elaboraciones: {
+        Row: {
+          arte_final_pdf_url: string | null
+          cac_id: number | null
+          creado_por: string
+          created_at: string
+          documento_generado_id: number | null
+          fecha: string
+          id: string
+          numero_documento_origen: string | null
+          observaciones: string | null
+          precio_cliente_usd: number | null
+          producto_id: string
+          tipo_documento_origen: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arte_final_pdf_url?: string | null
+          cac_id?: number | null
+          creado_por: string
+          created_at?: string
+          documento_generado_id?: number | null
+          fecha?: string
+          id?: string
+          numero_documento_origen?: string | null
+          observaciones?: string | null
+          precio_cliente_usd?: number | null
+          producto_id: string
+          tipo_documento_origen: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arte_final_pdf_url?: string | null
+          cac_id?: number | null
+          creado_por?: string
+          created_at?: string
+          documento_generado_id?: number | null
+          fecha?: string
+          id?: string
+          numero_documento_origen?: string | null
+          observaciones?: string | null
+          precio_cliente_usd?: number | null
+          producto_id?: string
+          tipo_documento_origen?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historial_elaboraciones_cac_id_fkey"
+            columns: ["cac_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_generados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historial_elaboraciones_documento_generado_id_fkey"
+            columns: ["documento_generado_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_generados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historial_elaboraciones_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_elaborados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventario_consumibles: {
         Row: {
           cantidad_disponible: number | null

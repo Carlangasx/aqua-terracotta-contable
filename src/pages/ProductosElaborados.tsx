@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   Plus, Edit, History, Package, ChevronDown, Upload, FileText, 
-  Copy, Trash2, Filter, Download, Eye
+  Copy, Trash2, Filter, Download, Eye, ArrowLeft, Clock, ExternalLink
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -61,31 +61,56 @@ type Cliente = {
   industria: string | null;
 };
 
-type HistorialEntry = {
+type HistorialElaboracion = {
   id: string;
-  fecha_cambio: string;
-  descripcion: string;
-  usuario_modificador: string;
-  cotizacion_pdf_url: string | null;
+  producto_id: string;
+  fecha: string;
+  tipo_documento_origen: 'FACT' | 'NDE' | 'SAL';
+  numero_documento_origen: string | null;
+  documento_generado_id: number | null;
+  precio_cliente_usd: number | null;
   arte_final_pdf_url: string | null;
+  cac_id: number | null;
+  observaciones: string | null;
+  created_at: string;
+  documentos_generados?: {
+    numero_documento: string;
+    url_pdf: string | null;
+    fecha_emision: string;
+  };
+  cac_documentos?: {
+    numero_documento: string;
+    url_pdf: string | null;
+    fecha_emision: string;
+  };
+};
+
+type DocumentoGenerado = {
+  id: number;
+  numero_documento: string;
+  tipo_documento: string;
+  fecha_emision: string;
+  url_pdf: string | null;
 };
 
 const TIPO_PRODUCTO_OPTIONS = ['Estuche', 'Caja', 'Microcorrugado', 'Otro'];
 const INDUSTRIA_OPTIONS = ['Farmacia', 'Alimentos', 'Cosmética', 'Otros'];
 const BARNIZ_OPTIONS = ['UV', 'AQ', 'Ninguno'];
 const PLASTIFICADO_OPTIONS = ['Mate', 'Brillante', 'Ninguno'];
+const TIPO_DOCUMENTO_OPTIONS = ['FACT', 'NDE', 'SAL'];
 
 const ProductosElaborados = () => {
   const { user } = useAuth();
   const [productos, setProductos] = useState<ProductoElaborado[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [documentos, setDocumentos] = useState<DocumentoGenerado[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [historialDialogOpen, setHistorialDialogOpen] = useState(false);
+  const [elaboracionDialogOpen, setElaboracionDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductoElaborado | null>(null);
-  const [historial, setHistorial] = useState<HistorialEntry[]>([]);
+  const [historialElaboraciones, setHistorialElaboraciones] = useState<HistorialElaboracion[]>([]);
   const [editingProduct, setEditingProduct] = useState<ProductoElaborado | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
   
   // Filtros
   const [filtroCliente, setFiltroCliente] = useState('');
@@ -116,14 +141,25 @@ const ProductosElaborados = () => {
     observaciones: ""
   });
 
+  const [elaboracionFormData, setElaboracionFormData] = useState({
+    fecha: new Date().toISOString().split('T')[0],
+    tipo_documento_origen: "" as 'FACT' | 'NDE' | 'SAL' | "",
+    documento_generado_id: "",
+    precio_cliente_usd: "",
+    cac_id: "",
+    observaciones: ""
+  });
+
   const [archivoArteFinal, setArchivoArteFinal] = useState<File | null>(null);
   const [archivoCotizacion, setArchivoCotizacion] = useState<File | null>(null);
+  const [archivoArteElaboracion, setArchivoArteElaboracion] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchProductos();
       fetchClientes();
+      fetchDocumentos();
     }
   }, [user]);
 
@@ -164,19 +200,46 @@ const ProductosElaborados = () => {
     }
   };
 
-  const fetchHistorial = async (productoId: string) => {
+  const fetchDocumentos = async () => {
     try {
       const { data, error } = await supabase
-        .from("productos_elaborados_historial")
-        .select("*")
-        .eq("producto_elaborado_id", productoId)
-        .order("fecha_cambio", { ascending: false });
+        .from("documentos_generados")
+        .select("id, numero_documento, tipo_documento, fecha_emision, url_pdf")
+        .in("tipo_documento", ["FACT", "NDE", "SAL", "CAC"])
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setHistorial(data || []);
+      setDocumentos(data || []);
     } catch (error) {
-      console.error("Error fetching historial:", error);
-      toast.error("Error al cargar el historial");
+      console.error("Error fetching documentos:", error);
+    }
+  };
+
+  const fetchHistorialElaboraciones = async (productoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("historial_elaboraciones")
+        .select(`
+          *,
+          documentos_generados:documento_generado_id (
+            numero_documento,
+            url_pdf,
+            fecha_emision
+          ),
+          cac_documentos:cac_id (
+            numero_documento,
+            url_pdf,
+            fecha_emision
+          )
+        `)
+        .eq("producto_id", productoId)
+        .order("fecha", { ascending: false });
+
+      if (error) throw error;
+      setHistorialElaboraciones(data || []);
+    } catch (error) {
+      console.error("Error fetching historial elaboraciones:", error);
+      toast.error("Error al cargar el historial de elaboraciones");
     }
   };
 
@@ -255,19 +318,6 @@ const ProductosElaborados = () => {
           .eq("id", editingProduct.id);
 
         if (error) throw error;
-
-        // Agregar entrada al historial
-        await supabase
-          .from("productos_elaborados_historial")
-          .insert({
-            user_id: user.id,
-            producto_elaborado_id: editingProduct.id,
-            descripcion: "Producto actualizado",
-            usuario_modificador: user.id,
-            arte_final_pdf_url: arteUrl,
-            cotizacion_pdf_url: cotizacionUrl
-          });
-
         toast.success("Producto actualizado correctamente");
       } else {
         const { error } = await supabase
@@ -284,6 +334,52 @@ const ProductosElaborados = () => {
     } catch (error) {
       console.error("Error saving producto:", error);
       toast.error("Error al guardar el producto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmitElaboracion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !selectedProduct) return;
+
+    setUploading(true);
+    try {
+      let arteUrl = null;
+      if (archivoArteElaboracion) {
+        arteUrl = await uploadFile(archivoArteElaboracion, 'arte_elaboracion');
+      }
+
+      const elaboracionData = {
+        user_id: user.id,
+        producto_id: selectedProduct.id,
+        fecha: elaboracionFormData.fecha,
+        tipo_documento_origen: elaboracionFormData.tipo_documento_origen,
+        numero_documento_origen: elaboracionFormData.documento_generado_id ? 
+          documentos.find(d => d.id.toString() === elaboracionFormData.documento_generado_id)?.numero_documento || null : null,
+        documento_generado_id: elaboracionFormData.documento_generado_id ? 
+          parseInt(elaboracionFormData.documento_generado_id) : null,
+        precio_cliente_usd: elaboracionFormData.precio_cliente_usd ? 
+          parseFloat(elaboracionFormData.precio_cliente_usd) : null,
+        arte_final_pdf_url: arteUrl,
+        cac_id: elaboracionFormData.cac_id ? parseInt(elaboracionFormData.cac_id) : null,
+        observaciones: elaboracionFormData.observaciones || null,
+        creado_por: user.id
+      };
+
+      const { error } = await supabase
+        .from("historial_elaboraciones")
+        .insert(elaboracionData);
+
+      if (error) throw error;
+
+      toast.success("Elaboración registrada correctamente");
+      setElaboracionDialogOpen(false);
+      resetElaboracionForm();
+      fetchHistorialElaboraciones(selectedProduct.id);
+    } catch (error) {
+      console.error("Error saving elaboracion:", error);
+      toast.error("Error al guardar la elaboración");
     } finally {
       setUploading(false);
     }
@@ -316,6 +412,18 @@ const ProductosElaborados = () => {
     setEditingProduct(null);
     setArchivoArteFinal(null);
     setArchivoCotizacion(null);
+  };
+
+  const resetElaboracionForm = () => {
+    setElaboracionFormData({
+      fecha: new Date().toISOString().split('T')[0],
+      tipo_documento_origen: "",
+      documento_generado_id: "",
+      precio_cliente_usd: "",
+      cac_id: "",
+      observaciones: ""
+    });
+    setArchivoArteElaboracion(null);
   };
 
   const handleEdit = (producto: ProductoElaborado) => {
@@ -392,10 +500,15 @@ const ProductosElaborados = () => {
     }
   };
 
-  const handleShowHistory = (producto: ProductoElaborado) => {
+  const handleProductClick = (producto: ProductoElaborado) => {
     setSelectedProduct(producto);
-    fetchHistorial(producto.id);
-    setHistorialDialogOpen(true);
+    setViewMode('detail');
+    fetchHistorialElaboraciones(producto.id);
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setSelectedProduct(null);
   };
 
   // Filtros
@@ -407,6 +520,13 @@ const ProductosElaborados = () => {
     
     return clienteMatch && tipoMatch && industriaMatch;
   });
+
+  const documentosFiltrados = documentos.filter(doc => 
+    elaboracionFormData.tipo_documento_origen === '' || 
+    doc.tipo_documento === elaboracionFormData.tipo_documento_origen
+  );
+
+  const cacDocumentos = documentos.filter(doc => doc.tipo_documento === 'CAC');
 
   if (loading) {
     return (
@@ -421,597 +541,827 @@ const ProductosElaborados = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Productos Elaborados</h1>
-            <p className="text-muted-foreground">
-              Gestiona los productos diseñados y fabricados bajo pedido
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <ImportarProductos onImportComplete={fetchProductos} />
-            <Button 
-              variant="outline" 
-              onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-            >
-              {viewMode === 'table' ? <Package className="mr-2 h-4 w-4" /> : <Table className="mr-2 h-4 w-4" />}
-              {viewMode === 'table' ? 'Vista Cards' : 'Vista Tabla'}
-            </Button>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={resetForm}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nuevo Producto
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingProduct ? "Editar Producto" : "Nuevo Producto Elaborado"}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Información General */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-primary">Información General</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2">
-                        <Label htmlFor="nombre_producto">Nombre del Producto *</Label>
-                        <Input
-                          id="nombre_producto"
-                          value={formData.nombre_producto}
-                          onChange={(e) => setFormData({ ...formData, nombre_producto: e.target.value })}
-                          required
-                          className="bg-green-50 border-green-200"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="cliente_id">Cliente</Label>
-                        <Select value={formData.cliente_id} onValueChange={(value) => setFormData({ ...formData, cliente_id: value })}>
-                          <SelectTrigger className="bg-green-50 border-green-200">
-                            <SelectValue placeholder="Seleccionar cliente" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {clientes.map((cliente) => (
-                              <SelectItem key={cliente.id} value={cliente.id}>
-                                {cliente.nombre_empresa}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+        {viewMode === 'list' ? (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Productos Elaborados - SKUs</h1>
+                <p className="text-muted-foreground">
+                  Menú interactivo de productos fabricados bajo pedido
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <ImportarProductos onImportComplete={fetchProductos} />
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={resetForm}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Nuevo SKU
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editingProduct ? "Editar SKU" : "Nuevo SKU"}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      {/* Información General */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-primary">Información General</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <Label htmlFor="nombre_producto">Nombre del Producto *</Label>
+                            <Input
+                              id="nombre_producto"
+                              value={formData.nombre_producto}
+                              onChange={(e) => setFormData({ ...formData, nombre_producto: e.target.value })}
+                              required
+                              className="bg-green-50 border-green-200"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="cliente_id">Cliente</Label>
+                            <Select value={formData.cliente_id} onValueChange={(value) => setFormData({ ...formData, cliente_id: value })}>
+                              <SelectTrigger className="bg-green-50 border-green-200">
+                                <SelectValue placeholder="Seleccionar cliente" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {clientes.map((cliente) => (
+                                  <SelectItem key={cliente.id} value={cliente.id}>
+                                    {cliente.nombre_empresa}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="tipo_producto">Tipo de Producto</Label>
+                            <Select value={formData.tipo_producto} onValueChange={(value) => setFormData({ ...formData, tipo_producto: value })}>
+                              <SelectTrigger className="bg-green-50 border-green-200">
+                                <SelectValue placeholder="Seleccionar tipo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIPO_PRODUCTO_OPTIONS.map((tipo) => (
+                                  <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="industria">Industria</Label>
+                            <Select value={formData.industria} onValueChange={(value) => setFormData({ ...formData, industria: value })}>
+                              <SelectTrigger className="bg-green-50 border-green-200">
+                                <SelectValue placeholder="Seleccionar industria" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {INDUSTRIA_OPTIONS.map((industria) => (
+                                  <SelectItem key={industria} value={industria}>{industria}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="precio_unitario_usd">Precio Unitario (USD)</Label>
+                            <Input
+                              id="precio_unitario_usd"
+                              type="number"
+                              step="0.01"
+                              value={formData.precio_unitario_usd}
+                              onChange={(e) => setFormData({ ...formData, precio_unitario_usd: e.target.value })}
+                              className="bg-terracotta-50 border-terracotta-200"
+                            />
+                          </div>
+                        </div>
                       </div>
 
-                      <div>
-                        <Label htmlFor="tipo_producto">Tipo de Producto</Label>
-                        <Select value={formData.tipo_producto} onValueChange={(value) => setFormData({ ...formData, tipo_producto: value })}>
-                          <SelectTrigger className="bg-green-50 border-green-200">
-                            <SelectValue placeholder="Seleccionar tipo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TIPO_PRODUCTO_OPTIONS.map((tipo) => (
-                              <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      {/* Especificaciones Técnicas - Colapsible */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="outline" type="button" className="w-full justify-between">
+                            <span className="flex items-center">
+                              <Package className="mr-2 h-4 w-4" />
+                              Especificaciones Técnicas
+                            </span>
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-4 mt-4 p-4 bg-ochre-50 rounded-lg border border-ochre-200">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor="alto">Alto (cm)</Label>
+                              <Input
+                                id="alto"
+                                type="number"
+                                step="0.01"
+                                value={formData.alto}
+                                onChange={(e) => setFormData({ ...formData, alto: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="ancho">Ancho (cm)</Label>
+                              <Input
+                                id="ancho"
+                                type="number"
+                                step="0.01"
+                                value={formData.ancho}
+                                onChange={(e) => setFormData({ ...formData, ancho: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="profundidad">Profundidad (cm)</Label>
+                              <Input
+                                id="profundidad"
+                                type="number"
+                                step="0.01"
+                                value={formData.profundidad}
+                                onChange={(e) => setFormData({ ...formData, profundidad: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="cantidad">Cantidad Base</Label>
+                              <Input
+                                id="cantidad"
+                                type="number"
+                                min="1"
+                                value={formData.cantidad}
+                                onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="numero_colores">Número de Colores</Label>
+                              <Input
+                                id="numero_colores"
+                                type="number"
+                                min="1"
+                                value={formData.numero_colores}
+                                onChange={(e) => setFormData({ ...formData, numero_colores: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="calibre">Calibre</Label>
+                              <Input
+                                id="calibre"
+                                value={formData.calibre}
+                                onChange={(e) => setFormData({ ...formData, calibre: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="sustrato">Sustrato</Label>
+                              <Input
+                                id="sustrato"
+                                value={formData.sustrato}
+                                onChange={(e) => setFormData({ ...formData, sustrato: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="tipo_material">Tipo de Material</Label>
+                              <Input
+                                id="tipo_material"
+                                value={formData.tipo_material}
+                                onChange={(e) => setFormData({ ...formData, tipo_material: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="colores">Colores</Label>
+                              <Input
+                                id="colores"
+                                value={formData.colores}
+                                onChange={(e) => setFormData({ ...formData, colores: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="barniz">Barniz</Label>
+                              <Select value={formData.barniz} onValueChange={(value) => setFormData({ ...formData, barniz: value })}>
+                                <SelectTrigger className="bg-white">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {BARNIZ_OPTIONS.map((barniz) => (
+                                    <SelectItem key={barniz} value={barniz}>{barniz}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="plastificado">Plastificado</Label>
+                              <Select value={formData.plastificado} onValueChange={(value) => setFormData({ ...formData, plastificado: value })}>
+                                <SelectTrigger className="bg-white">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PLASTIFICADO_OPTIONS.map((plastificado) => (
+                                    <SelectItem key={plastificado} value={plastificado}>{plastificado}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="empaquetado">Empaquetado</Label>
+                              <Input
+                                id="empaquetado"
+                                value={formData.empaquetado}
+                                onChange={(e) => setFormData({ ...formData, empaquetado: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="pegado">Pegado</Label>
+                              <Input
+                                id="pegado"
+                                value={formData.pegado}
+                                onChange={(e) => setFormData({ ...formData, pegado: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="numero_paquetes">Nº Paquetes</Label>
+                              <Input
+                                id="numero_paquetes"
+                                value={formData.numero_paquetes}
+                                onChange={(e) => setFormData({ ...formData, numero_paquetes: e.target.value })}
+                                className="bg-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="troquelado"
+                              checked={formData.troquelado}
+                              onCheckedChange={(checked) => setFormData({ ...formData, troquelado: !!checked })}
+                            />
+                            <Label htmlFor="troquelado">Troquelado</Label>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Archivos */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-primary">Archivos de Referencia</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="arte_final">Arte Final (PDF)</Label>
+                            <Input
+                              id="arte_final"
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) => setArchivoArteFinal(e.target.files?.[0] || null)}
+                              className="bg-green-50 border-green-200"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="cotizacion">Cotización (PDF)</Label>
+                            <Input
+                              id="cotizacion"
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) => setArchivoCotizacion(e.target.files?.[0] || null)}
+                              className="bg-green-50 border-green-200"
+                            />
+                          </div>
+                        </div>
                       </div>
 
+                      {/* Observaciones */}
                       <div>
-                        <Label htmlFor="industria">Industria</Label>
-                        <Select value={formData.industria} onValueChange={(value) => setFormData({ ...formData, industria: value })}>
-                          <SelectTrigger className="bg-green-50 border-green-200">
-                            <SelectValue placeholder="Seleccionar industria" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {INDUSTRIA_OPTIONS.map((industria) => (
-                              <SelectItem key={industria} value={industria}>{industria}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="precio_unitario_usd">Precio Unitario (USD)</Label>
-                        <Input
-                          id="precio_unitario_usd"
-                          type="number"
-                          step="0.01"
-                          value={formData.precio_unitario_usd}
-                          onChange={(e) => setFormData({ ...formData, precio_unitario_usd: e.target.value })}
+                        <Label htmlFor="observaciones">Observaciones</Label>
+                        <Textarea
+                          id="observaciones"
+                          value={formData.observaciones}
+                          onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
                           className="bg-terracotta-50 border-terracotta-200"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Especificaciones Técnicas - Colapsible */}
-                  <Collapsible>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="outline" type="button" className="w-full justify-between">
-                        <span className="flex items-center">
-                          <Package className="mr-2 h-4 w-4" />
-                          Especificaciones Técnicas
-                        </span>
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-4 mt-4 p-4 bg-ochre-50 rounded-lg border border-ochre-200">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <Label htmlFor="alto">Alto (cm)</Label>
-                          <Input
-                            id="alto"
-                            type="number"
-                            step="0.01"
-                            value={formData.alto}
-                            onChange={(e) => setFormData({ ...formData, alto: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="ancho">Ancho (cm)</Label>
-                          <Input
-                            id="ancho"
-                            type="number"
-                            step="0.01"
-                            value={formData.ancho}
-                            onChange={(e) => setFormData({ ...formData, ancho: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="profundidad">Profundidad (cm)</Label>
-                          <Input
-                            id="profundidad"
-                            type="number"
-                            step="0.01"
-                            value={formData.profundidad}
-                            onChange={(e) => setFormData({ ...formData, profundidad: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="cantidad">Cantidad</Label>
-                          <Input
-                            id="cantidad"
-                            type="number"
-                            min="1"
-                            value={formData.cantidad}
-                            onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="numero_colores">Número de Colores</Label>
-                          <Input
-                            id="numero_colores"
-                            type="number"
-                            min="1"
-                            value={formData.numero_colores}
-                            onChange={(e) => setFormData({ ...formData, numero_colores: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="calibre">Calibre</Label>
-                          <Input
-                            id="calibre"
-                            value={formData.calibre}
-                            onChange={(e) => setFormData({ ...formData, calibre: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="sustrato">Sustrato</Label>
-                          <Input
-                            id="sustrato"
-                            value={formData.sustrato}
-                            onChange={(e) => setFormData({ ...formData, sustrato: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="tipo_material">Tipo de Material</Label>
-                          <Input
-                            id="tipo_material"
-                            value={formData.tipo_material}
-                            onChange={(e) => setFormData({ ...formData, tipo_material: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="colores">Colores</Label>
-                          <Input
-                            id="colores"
-                            value={formData.colores}
-                            onChange={(e) => setFormData({ ...formData, colores: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="barniz">Barniz</Label>
-                          <Select value={formData.barniz} onValueChange={(value) => setFormData({ ...formData, barniz: value })}>
-                            <SelectTrigger className="bg-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {BARNIZ_OPTIONS.map((barniz) => (
-                                <SelectItem key={barniz} value={barniz}>{barniz}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="plastificado">Plastificado</Label>
-                          <Select value={formData.plastificado} onValueChange={(value) => setFormData({ ...formData, plastificado: value })}>
-                            <SelectTrigger className="bg-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PLASTIFICADO_OPTIONS.map((plastificado) => (
-                                <SelectItem key={plastificado} value={plastificado}>{plastificado}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="empaquetado">Empaquetado</Label>
-                          <Input
-                            id="empaquetado"
-                            value={formData.empaquetado}
-                            onChange={(e) => setFormData({ ...formData, empaquetado: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="pegado">Pegado</Label>
-                          <Input
-                            id="pegado"
-                            value={formData.pegado}
-                            onChange={(e) => setFormData({ ...formData, pegado: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="numero_paquetes">Nº Paquetes</Label>
-                          <Input
-                            id="numero_paquetes"
-                            value={formData.numero_paquetes}
-                            onChange={(e) => setFormData({ ...formData, numero_paquetes: e.target.value })}
-                            className="bg-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="troquelado"
-                          checked={formData.troquelado}
-                          onCheckedChange={(checked) => setFormData({ ...formData, troquelado: !!checked })}
-                        />
-                        <Label htmlFor="troquelado">Troquelado</Label>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Archivos */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-primary">Archivos Adjuntos</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="arte_final">Arte Final (PDF)</Label>
-                        <Input
-                          id="arte_final"
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setArchivoArteFinal(e.target.files?.[0] || null)}
-                          className="bg-green-50 border-green-200"
+                          rows={3}
                         />
                       </div>
                       
-                      <div>
-                        <Label htmlFor="cotizacion">Cotización (PDF)</Label>
-                        <Input
-                          id="cotizacion"
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setArchivoCotizacion(e.target.files?.[0] || null)}
-                          className="bg-green-50 border-green-200"
-                        />
+                      <div className="flex justify-end space-x-2">
+                        <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button type="submit" disabled={uploading}>
+                          {uploading && <Upload className="mr-2 h-4 w-4 animate-spin" />}
+                          {editingProduct ? "Actualizar" : "Crear"} SKU
+                        </Button>
                       </div>
-                    </div>
-                  </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
 
-                  {/* Observaciones */}
+            {/* Filtros */}
+            <Card className="bg-gradient-to-r from-green-50 to-terracotta-50 border-green-200">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <Filter className="mr-2 h-5 w-5" />
+                  Filtros
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="observaciones">Observaciones</Label>
-                    <Textarea
-                      id="observaciones"
-                      value={formData.observaciones}
-                      onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-                      className="bg-terracotta-50 border-terracotta-200"
-                      rows={3}
+                    <Label htmlFor="filtro_cliente">Cliente</Label>
+                    <Input
+                      id="filtro_cliente"
+                      placeholder="Buscar por cliente..."
+                      value={filtroCliente}
+                      onChange={(e) => setFiltroCliente(e.target.value)}
+                      className="bg-white"
                     />
                   </div>
                   
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={uploading}>
-                      {uploading && <Upload className="mr-2 h-4 w-4 animate-spin" />}
-                      {editingProduct ? "Actualizar" : "Crear"} Producto
-                    </Button>
+                  <div>
+                    <Label htmlFor="filtro_tipo">Tipo de Producto</Label>
+                    <Select value={filtroTipoProducto} onValueChange={setFiltroTipoProducto}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Todos los tipos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos los tipos</SelectItem>
+                        {TIPO_PRODUCTO_OPTIONS.map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
 
-        {/* Filtros */}
-        <Card className="bg-gradient-to-r from-green-50 to-terracotta-50 border-green-200">
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <Filter className="mr-2 h-5 w-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="filtro_cliente">Cliente</Label>
-                <Input
-                  id="filtro_cliente"
-                  placeholder="Buscar por cliente..."
-                  value={filtroCliente}
-                  onChange={(e) => setFiltroCliente(e.target.value)}
-                  className="bg-white"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="filtro_tipo">Tipo de Producto</Label>
-                <Select value={filtroTipoProducto} onValueChange={setFiltroTipoProducto}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Todos los tipos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos los tipos</SelectItem>
-                    {TIPO_PRODUCTO_OPTIONS.map((tipo) => (
-                      <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div>
+                    <Label htmlFor="filtro_industria">Industria</Label>
+                    <Select value={filtroIndustria} onValueChange={setFiltroIndustria}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Todas las industrias" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todas">Todas las industrias</SelectItem>
+                        {INDUSTRIA_OPTIONS.map((industria) => (
+                          <SelectItem key={industria} value={industria}>{industria}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <Label htmlFor="filtro_industria">Industria</Label>
-                <Select value={filtroIndustria} onValueChange={setFiltroIndustria}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Todas las industrias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas">Todas las industrias</SelectItem>
-                    {INDUSTRIA_OPTIONS.map((industria) => (
-                      <SelectItem key={industria} value={industria}>{industria}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Contenido Principal */}
-        {viewMode === 'table' ? (
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-ochre-50 hover:bg-ochre-100">
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Industria</TableHead>
-                  <TableHead>Medidas</TableHead>
-                  <TableHead>Precio USD</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {productosFiltrados.map((producto) => (
-                  <TableRow key={producto.id} className="hover:bg-green-50">
-                    <TableCell className="font-medium">{producto.nombre_producto}</TableCell>
-                    <TableCell>{producto.clientes?.nombre_empresa || "Sin asignar"}</TableCell>
-                    <TableCell>
-                      {producto.tipo_producto && (
-                        <Badge variant="secondary">{producto.tipo_producto}</Badge>
+            {/* Lista de SKUs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {productosFiltrados.map((producto) => (
+                <Card 
+                  key={producto.id} 
+                  className="hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-white to-green-50 border-green-200 hover:border-green-300"
+                  onClick={() => handleProductClick(producto)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg text-primary">{producto.nombre_producto}</CardTitle>
+                        <CardDescription>
+                          {producto.clientes?.nombre_empresa || "Sin cliente asignado"}
+                        </CardDescription>
+                      </div>
+                      <div className="space-y-1">
+                        {producto.tipo_producto && (
+                          <Badge variant="secondary">{producto.tipo_producto}</Badge>
+                        )}
+                        {producto.industria && (
+                          <Badge variant="outline">{producto.industria}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      {(producto.alto || producto.ancho || producto.profundidad) && (
+                        <div>
+                          <strong>Medidas:</strong> {producto.alto || "?"} × {producto.ancho || "?"} × {producto.profundidad || "?"} cm
+                        </div>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {producto.industria && (
-                        <Badge variant="outline">{producto.industria}</Badge>
+                      {producto.precio_unitario_usd && (
+                        <div><strong>Precio Base:</strong> ${producto.precio_unitario_usd.toFixed(2)} USD</div>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {(producto.alto || producto.ancho || producto.profundidad) ? 
-                        `${producto.alto || "?"}×${producto.ancho || "?"}×${producto.profundidad || "?"}cm` : 
-                        "-"
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {producto.precio_unitario_usd ? `$${producto.precio_unitario_usd.toFixed(2)}` : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(producto.fecha_creacion), "dd/MM/yyyy", { locale: es })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(producto)}>
+                      {producto.numero_colores && (
+                        <div><strong>Colores:</strong> {producto.numero_colores}</div>
+                      )}
+                      <div>
+                        <strong>Cantidad Base:</strong> {producto.cantidad}
+                      </div>
+                      <div>
+                        <strong>Creado:</strong> {format(new Date(producto.fecha_creacion), "dd/MM/yyyy", { locale: es })}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between mt-4">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Package className="h-4 w-4 mr-1" />
+                        Click para ver detalles
+                      </div>
+                      <div className="space-x-1">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={(e) => { e.stopPropagation(); handleEdit(producto); }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDuplicate(producto)}>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={(e) => { e.stopPropagation(); handleDuplicate(producto); }}
+                        >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleShowHistory(producto)}>
-                          <History className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(producto.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(producto.id); }}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
             {productosFiltrados.length === 0 && (
               <div className="text-center py-12">
                 <Package className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold">No se encontraron productos</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Ajusta los filtros o crea un nuevo producto.
+                  Ajusta los filtros o crea un nuevo SKU.
                 </p>
               </div>
             )}
-          </Card>
+          </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {productosFiltrados.map((producto) => (
-              <Card key={producto.id} className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-green-50 border-green-200">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{producto.nombre_producto}</CardTitle>
-                      <CardDescription>
-                        {producto.clientes?.nombre_empresa || "Sin cliente asignado"}
-                      </CardDescription>
-                    </div>
-                    <div className="space-y-1">
-                      {producto.tipo_producto && (
-                        <Badge variant="secondary">{producto.tipo_producto}</Badge>
-                      )}
-                      {producto.industria && (
-                        <Badge variant="outline">{producto.industria}</Badge>
-                      )}
-                    </div>
+          /* Vista detallada del producto */
+          selectedProduct && (
+            <div className="space-y-6">
+              {/* Header con botón de regreso */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Button variant="outline" onClick={handleBackToList}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Volver al Listado
+                  </Button>
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight">{selectedProduct.nombre_producto}</h1>
+                    <p className="text-muted-foreground">
+                      {selectedProduct.clientes?.nombre_empresa || "Sin cliente asignado"}
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    {(producto.alto || producto.ancho || producto.profundidad) && (
-                      <div>
-                        <strong>Medidas:</strong> {producto.alto || "?"} × {producto.ancho || "?"} × {producto.profundidad || "?"} cm
-                      </div>
-                    )}
-                    {producto.precio_unitario_usd && (
-                      <div><strong>Precio:</strong> ${producto.precio_unitario_usd.toFixed(2)} USD</div>
-                    )}
-                    {producto.numero_colores && (
-                      <div><strong>Colores:</strong> {producto.numero_colores}</div>
-                    )}
-                    <div>
-                      <strong>Cantidad:</strong> {producto.cantidad}
-                    </div>
-                    <div>
-                      <strong>Creado:</strong> {format(new Date(producto.fecha_creacion), "dd/MM/yyyy", { locale: es })}
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between mt-4">
-                    <div className="space-x-1">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(producto)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDuplicate(producto)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleShowHistory(producto)}>
-                        <History className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="destructive" 
-                      onClick={() => handleDelete(producto.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Dialog del Historial */}
-        <Dialog open={historialDialogOpen} onOpenChange={setHistorialDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[80vh]">
-            <DialogHeader>
-              <DialogTitle>
-                Historial de Cambios - {selectedProduct?.nombre_producto}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-              {historial.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <History className="mx-auto h-12 w-12" />
-                  <p className="mt-2">No hay cambios registrados</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {historial.map((entry) => (
-                    <Card key={entry.id} className="bg-gradient-to-r from-ochre-50 to-terracotta-50">
-                      <CardContent className="pt-4">
-                        <div className="flex justify-between items-start">
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={() => handleEdit(selectedProduct)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar SKU
+                  </Button>
+                  <Dialog open={elaboracionDialogOpen} onOpenChange={setElaboracionDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={resetElaboracionForm}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Añadir Elaboración
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Añadir Elaboración</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleSubmitElaboracion} className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="font-medium">{entry.descripcion}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(entry.fecha_cambio), "dd/MM/yyyy HH:mm", { locale: es })}
-                            </p>
+                            <Label htmlFor="fecha">Fecha</Label>
+                            <Input
+                              id="fecha"
+                              type="date"
+                              value={elaboracionFormData.fecha}
+                              onChange={(e) => setElaboracionFormData({ ...elaboracionFormData, fecha: e.target.value })}
+                              required
+                              className="bg-green-50 border-green-200"
+                            />
                           </div>
-                          <div className="flex space-x-2">
-                            {entry.arte_final_pdf_url && (
-                              <Button size="sm" variant="outline" asChild>
-                                <a href={entry.arte_final_pdf_url} target="_blank" rel="noopener noreferrer">
-                                  <FileText className="h-4 w-4 mr-1" />
-                                  Arte
-                                </a>
-                              </Button>
-                            )}
-                            {entry.cotizacion_pdf_url && (
-                              <Button size="sm" variant="outline" asChild>
-                                <a href={entry.cotizacion_pdf_url} target="_blank" rel="noopener noreferrer">
-                                  <Download className="h-4 w-4 mr-1" />
-                                  Cotización
-                                </a>
-                              </Button>
-                            )}
+
+                          <div>
+                            <Label htmlFor="tipo_documento">Tipo de Documento</Label>
+                            <Select 
+                              value={elaboracionFormData.tipo_documento_origen} 
+                              onValueChange={(value: 'FACT' | 'NDE' | 'SAL') => setElaboracionFormData({ 
+                                ...elaboracionFormData, 
+                                tipo_documento_origen: value, 
+                                documento_generado_id: '' 
+                              })}
+                            >
+                              <SelectTrigger className="bg-green-50 border-green-200">
+                                <SelectValue placeholder="Seleccionar tipo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIPO_DOCUMENTO_OPTIONS.map((tipo) => (
+                                  <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {elaboracionFormData.tipo_documento_origen && (
+                            <div>
+                              <Label htmlFor="documento_id">Documento de Origen</Label>
+                              <Select 
+                                value={elaboracionFormData.documento_generado_id} 
+                                onValueChange={(value) => setElaboracionFormData({ ...elaboracionFormData, documento_generado_id: value })}
+                              >
+                                <SelectTrigger className="bg-green-50 border-green-200">
+                                  <SelectValue placeholder="Seleccionar documento" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {documentosFiltrados.map((doc) => (
+                                    <SelectItem key={doc.id} value={doc.id.toString()}>
+                                      {doc.numero_documento} ({format(new Date(doc.fecha_emision), "dd/MM/yyyy")})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          <div>
+                            <Label htmlFor="precio_cliente">Precio Final Cliente (USD)</Label>
+                            <Input
+                              id="precio_cliente"
+                              type="number"
+                              step="0.01"
+                              value={elaboracionFormData.precio_cliente_usd}
+                              onChange={(e) => setElaboracionFormData({ ...elaboracionFormData, precio_cliente_usd: e.target.value })}
+                              className="bg-terracotta-50 border-terracotta-200"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="cac_id">CAC Asociado</Label>
+                            <Select 
+                              value={elaboracionFormData.cac_id} 
+                              onValueChange={(value) => setElaboracionFormData({ ...elaboracionFormData, cac_id: value })}
+                            >
+                              <SelectTrigger className="bg-ochre-50 border-ochre-200">
+                                <SelectValue placeholder="Seleccionar CAC (opcional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {cacDocumentos.map((doc) => (
+                                  <SelectItem key={doc.id} value={doc.id.toString()}>
+                                    {doc.numero_documento} ({format(new Date(doc.fecha_emision), "dd/MM/yyyy")})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="col-span-2">
+                            <Label htmlFor="arte_elaboracion">Arte Final de Elaboración (PDF)</Label>
+                            <Input
+                              id="arte_elaboracion"
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) => setArchivoArteElaboracion(e.target.files?.[0] || null)}
+                              className="bg-green-50 border-green-200"
+                            />
                           </div>
                         </div>
+
+                        <div>
+                          <Label htmlFor="observaciones_elaboracion">Observaciones</Label>
+                          <Textarea
+                            id="observaciones_elaboracion"
+                            value={elaboracionFormData.observaciones}
+                            onChange={(e) => setElaboracionFormData({ ...elaboracionFormData, observaciones: e.target.value })}
+                            className="bg-terracotta-50 border-terracotta-200"
+                            rows={3}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-end space-x-2">
+                          <Button type="button" variant="outline" onClick={() => setElaboracionDialogOpen(false)}>
+                            Cancelar
+                          </Button>
+                          <Button type="submit" disabled={uploading}>
+                            {uploading && <Upload className="mr-2 h-4 w-4 animate-spin" />}
+                            Guardar Elaboración
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              <Tabs defaultValue="detalles" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="detalles">📋 Detalles del SKU</TabsTrigger>
+                  <TabsTrigger value="historial" className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Historial de Elaboraciones
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="detalles">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Información General */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Información General</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div><strong>Nombre:</strong> {selectedProduct.nombre_producto}</div>
+                        <div><strong>Cliente:</strong> {selectedProduct.clientes?.nombre_empresa || "Sin asignar"}</div>
+                        <div><strong>Tipo:</strong> {selectedProduct.tipo_producto || "-"}</div>
+                        <div><strong>Industria:</strong> {selectedProduct.industria || "-"}</div>
+                        <div><strong>Precio Base:</strong> {selectedProduct.precio_unitario_usd ? `$${selectedProduct.precio_unitario_usd.toFixed(2)} USD` : "-"}</div>
+                        <div><strong>Fecha de Creación:</strong> {format(new Date(selectedProduct.fecha_creacion), "dd/MM/yyyy", { locale: es })}</div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              )}
+
+                    {/* Especificaciones Técnicas */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Especificaciones Técnicas</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div>
+                          <strong>Dimensiones:</strong> {
+                            (selectedProduct.alto || selectedProduct.ancho || selectedProduct.profundidad) ? 
+                            `${selectedProduct.alto || "?"}×${selectedProduct.ancho || "?"}×${selectedProduct.profundidad || "?"}cm` : 
+                            "No definidas"
+                          }
+                        </div>
+                        <div><strong>Cantidad Base:</strong> {selectedProduct.cantidad}</div>
+                        <div><strong>Colores:</strong> {selectedProduct.numero_colores || "-"}</div>
+                        <div><strong>Sustrato:</strong> {selectedProduct.sustrato || "-"}</div>
+                        <div><strong>Calibre:</strong> {selectedProduct.calibre || "-"}</div>
+                        <div><strong>Barniz:</strong> {selectedProduct.barniz || "-"}</div>
+                        <div><strong>Plastificado:</strong> {selectedProduct.plastificado || "-"}</div>
+                        <div><strong>Troquelado:</strong> {selectedProduct.troquelado ? "Sí" : "No"}</div>
+                        <div><strong>Empaquetado:</strong> {selectedProduct.empaquetado || "-"}</div>
+                        <div><strong>Pegado:</strong> {selectedProduct.pegado || "-"}</div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Archivos de Referencia */}
+                    {(selectedProduct.arte_final_pdf_url || selectedProduct.cotizacion_pdf_url) && (
+                      <Card className="lg:col-span-2">
+                        <CardHeader>
+                          <CardTitle>Archivos de Referencia</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex space-x-4">
+                            {selectedProduct.arte_final_pdf_url && (
+                              <Button variant="outline" asChild>
+                                <a href={selectedProduct.arte_final_pdf_url} target="_blank" rel="noopener noreferrer">
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Ver Arte Final
+                                </a>
+                              </Button>
+                            )}
+                            {selectedProduct.cotizacion_pdf_url && (
+                              <Button variant="outline" asChild>
+                                <a href={selectedProduct.cotizacion_pdf_url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Ver Cotización
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Observaciones */}
+                    {selectedProduct.observaciones && (
+                      <Card className="lg:col-span-2">
+                        <CardHeader>
+                          <CardTitle>Observaciones</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm bg-terracotta-50 p-3 rounded border">{selectedProduct.observaciones}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="historial">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Clock className="mr-2 h-5 w-5" />
+                        Historial de Elaboraciones
+                      </CardTitle>
+                      <CardDescription>
+                        Registro cronológico de todas las veces que este SKU ha sido elaborado o despachado
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {historialElaboraciones.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <History className="mx-auto h-12 w-12" />
+                          <p className="mt-2">No hay elaboraciones registradas</p>
+                          <p className="text-sm">Añade la primera elaboración usando el botón superior</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {historialElaboraciones.map((elaboracion) => (
+                            <Card key={elaboracion.id} className="bg-gradient-to-r from-ochre-50 to-terracotta-50">
+                              <CardContent className="pt-4">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <div className="flex items-center space-x-2">
+                                      <Badge variant="outline">{elaboracion.tipo_documento_origen}</Badge>
+                                      <span className="font-medium">
+                                        {format(new Date(elaboracion.fecha), "dd/MM/yyyy", { locale: es })}
+                                      </span>
+                                    </div>
+                                    {elaboracion.numero_documento_origen && (
+                                      <p className="text-sm text-muted-foreground">
+                                        Documento: {elaboracion.numero_documento_origen}
+                                      </p>
+                                    )}
+                                    {elaboracion.precio_cliente_usd && (
+                                      <p className="text-sm font-medium text-green-700">
+                                        Precio Cliente: ${elaboracion.precio_cliente_usd.toFixed(2)} USD
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    {elaboracion.documentos_generados?.url_pdf && (
+                                      <Button size="sm" variant="outline" asChild>
+                                        <a href={elaboracion.documentos_generados.url_pdf} target="_blank" rel="noopener noreferrer">
+                                          <FileText className="h-4 w-4 mr-1" />
+                                          PDF
+                                        </a>
+                                      </Button>
+                                    )}
+                                    {elaboracion.arte_final_pdf_url && (
+                                      <Button size="sm" variant="outline" asChild>
+                                        <a href={elaboracion.arte_final_pdf_url} target="_blank" rel="noopener noreferrer">
+                                          <Eye className="h-4 w-4 mr-1" />
+                                          Arte
+                                        </a>
+                                      </Button>
+                                    )}
+                                    {elaboracion.cac_documentos?.url_pdf && (
+                                      <Button size="sm" variant="secondary" asChild>
+                                        <a href={elaboracion.cac_documentos.url_pdf} target="_blank" rel="noopener noreferrer">
+                                          <ExternalLink className="h-4 w-4 mr-1" />
+                                          CAC
+                                        </a>
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                                {elaboracion.observaciones && (
+                                  <div className="mt-2 p-2 bg-white rounded text-sm border">
+                                    <strong>Observaciones:</strong> {elaboracion.observaciones}
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
-          </DialogContent>
-        </Dialog>
+          )
+        )}
       </div>
     </MainLayout>
   );
