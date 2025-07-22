@@ -52,11 +52,33 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 25 30% 30%;
     --sidebar-border: 130 15% 88%;
     --sidebar-ring: 130 25% 70%;
+
+    /* Colores pasteles para PrintMatch */
+    --green-50: 120 60% 97%;
+    --green-100: 120 40% 92%;
+    --green-200: 120 30% 85%;
+    --terracotta-50: 15 60% 97%;
+    --terracotta-100: 15 50% 92%;
+    --terracotta-200: 15 40% 85%;
+    --ochre-50: 45 60% 97%;
+    --ochre-100: 45 50% 92%;
+    --ochre-200: 45 40% 85%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+
+    /* Colores pasteles para modo oscuro */
+    --green-50: 120 20% 15%;
+    --green-100: 120 25% 20%;
+    --green-200: 120 30% 25%;
+    --terracotta-50: 15 20% 15%;
+    --terracotta-100: 15 25% 20%;
+    --terracotta-200: 15 30% 25%;
+    --ochre-50: 45 20% 15%;
+    --ochre-100: 45 25% 20%;
+    --ochre-200: 45 30% 25%;
 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;

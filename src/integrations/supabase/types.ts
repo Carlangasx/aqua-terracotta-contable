@@ -683,16 +683,30 @@ export type Database = {
           actualizado_por: string
           alto: number | null
           ancho: number | null
+          arte_final_pdf_url: string | null
+          barniz: string | null
+          calibre: string | null
           cantidad: number | null
           cliente_id: string | null
+          colores: string | null
+          cotizacion_pdf_url: string | null
           created_at: string
+          empaquetado: string | null
           fecha_creacion: string | null
           id: string
+          industria: string | null
           nombre_producto: string
           numero_colores: number | null
+          numero_paquetes: string | null
           observaciones: string | null
+          pegado: string | null
+          plastificado: string | null
+          precio_unitario_usd: number | null
           profundidad: number | null
+          sustrato: string | null
           tipo_material: string | null
+          tipo_producto: string | null
+          troquelado: boolean | null
           ultima_modificacion: string | null
           updated_at: string
           user_id: string
@@ -701,16 +715,30 @@ export type Database = {
           actualizado_por: string
           alto?: number | null
           ancho?: number | null
+          arte_final_pdf_url?: string | null
+          barniz?: string | null
+          calibre?: string | null
           cantidad?: number | null
           cliente_id?: string | null
+          colores?: string | null
+          cotizacion_pdf_url?: string | null
           created_at?: string
+          empaquetado?: string | null
           fecha_creacion?: string | null
           id?: string
+          industria?: string | null
           nombre_producto: string
           numero_colores?: number | null
+          numero_paquetes?: string | null
           observaciones?: string | null
+          pegado?: string | null
+          plastificado?: string | null
+          precio_unitario_usd?: number | null
           profundidad?: number | null
+          sustrato?: string | null
           tipo_material?: string | null
+          tipo_producto?: string | null
+          troquelado?: boolean | null
           ultima_modificacion?: string | null
           updated_at?: string
           user_id: string
@@ -719,16 +747,30 @@ export type Database = {
           actualizado_por?: string
           alto?: number | null
           ancho?: number | null
+          arte_final_pdf_url?: string | null
+          barniz?: string | null
+          calibre?: string | null
           cantidad?: number | null
           cliente_id?: string | null
+          colores?: string | null
+          cotizacion_pdf_url?: string | null
           created_at?: string
+          empaquetado?: string | null
           fecha_creacion?: string | null
           id?: string
+          industria?: string | null
           nombre_producto?: string
           numero_colores?: number | null
+          numero_paquetes?: string | null
           observaciones?: string | null
+          pegado?: string | null
+          plastificado?: string | null
+          precio_unitario_usd?: number | null
           profundidad?: number | null
+          sustrato?: string | null
           tipo_material?: string | null
+          tipo_producto?: string | null
+          troquelado?: boolean | null
           ultima_modificacion?: string | null
           updated_at?: string
           user_id?: string
@@ -739,6 +781,44 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productos_elaborados_archivos: {
+        Row: {
+          created_at: string
+          id: string
+          nombre_archivo: string
+          producto_elaborado_id: string | null
+          tipo_archivo: string
+          url_archivo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nombre_archivo: string
+          producto_elaborado_id?: string | null
+          tipo_archivo: string
+          url_archivo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nombre_archivo?: string
+          producto_elaborado_id?: string | null
+          tipo_archivo?: string
+          url_archivo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_elaborados_archivos_producto_elaborado_id_fkey"
+            columns: ["producto_elaborado_id"]
+            isOneToOne: false
+            referencedRelation: "productos_elaborados"
             referencedColumns: ["id"]
           },
         ]
