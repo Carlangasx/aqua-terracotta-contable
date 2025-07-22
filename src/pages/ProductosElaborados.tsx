@@ -88,8 +88,8 @@ const ProductosElaborados = () => {
   
   // Filtros
   const [filtroCliente, setFiltroCliente] = useState('');
-  const [filtroTipoProducto, setFiltroTipoProducto] = useState('');
-  const [filtroIndustria, setFiltroIndustria] = useState('');
+  const [filtroTipoProducto, setFiltroTipoProducto] = useState('todos');
+  const [filtroIndustria, setFiltroIndustria] = useState('todas');
 
   const [formData, setFormData] = useState({
     nombre_producto: "",
@@ -401,8 +401,8 @@ const ProductosElaborados = () => {
   const productosFiltrados = productos.filter(producto => {
     const clienteMatch = !filtroCliente || 
       producto.clientes?.nombre_empresa.toLowerCase().includes(filtroCliente.toLowerCase());
-    const tipoMatch = !filtroTipoProducto || producto.tipo_producto === filtroTipoProducto;
-    const industriaMatch = !filtroIndustria || producto.industria === filtroIndustria;
+    const tipoMatch = filtroTipoProducto === 'todos' || producto.tipo_producto === filtroTipoProducto;
+    const industriaMatch = filtroIndustria === 'todas' || producto.industria === filtroIndustria;
     
     return clienteMatch && tipoMatch && industriaMatch;
   });
@@ -789,7 +789,7 @@ const ProductosElaborados = () => {
                     <SelectValue placeholder="Todos los tipos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los tipos</SelectItem>
+                    <SelectItem value="todos">Todos los tipos</SelectItem>
                     {TIPO_PRODUCTO_OPTIONS.map((tipo) => (
                       <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
                     ))}
@@ -804,7 +804,7 @@ const ProductosElaborados = () => {
                     <SelectValue placeholder="Todas las industrias" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas las industrias</SelectItem>
+                    <SelectItem value="todas">Todas las industrias</SelectItem>
                     {INDUSTRIA_OPTIONS.map((industria) => (
                       <SelectItem key={industria} value={industria}>{industria}</SelectItem>
                     ))}
