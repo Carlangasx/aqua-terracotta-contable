@@ -14,6 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      cac_archivos: {
+        Row: {
+          created_at: string
+          documento_id: number
+          id: string
+          nombre_archivo: string
+          tipo_archivo: string
+          url_archivo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          documento_id: number
+          id?: string
+          nombre_archivo: string
+          tipo_archivo: string
+          url_archivo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          documento_id?: number
+          id?: string
+          nombre_archivo?: string
+          tipo_archivo?: string
+          url_archivo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cac_archivos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_generados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cac_resultados: {
+        Row: {
+          alto_real: number | null
+          ancho_real: number | null
+          barniz: string | null
+          calibre: string | null
+          colores: string | null
+          created_at: string
+          documento_id: number
+          empaquetado: string | null
+          extras: Json | null
+          id: string
+          n_paquetes: string | null
+          pegado: string | null
+          plastificado: string | null
+          profundidad_real: number | null
+          sustrato: string | null
+          troquelado: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alto_real?: number | null
+          ancho_real?: number | null
+          barniz?: string | null
+          calibre?: string | null
+          colores?: string | null
+          created_at?: string
+          documento_id: number
+          empaquetado?: string | null
+          extras?: Json | null
+          id?: string
+          n_paquetes?: string | null
+          pegado?: string | null
+          plastificado?: string | null
+          profundidad_real?: number | null
+          sustrato?: string | null
+          troquelado?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alto_real?: number | null
+          ancho_real?: number | null
+          barniz?: string | null
+          calibre?: string | null
+          colores?: string | null
+          created_at?: string
+          documento_id?: number
+          empaquetado?: string | null
+          extras?: Json | null
+          id?: string
+          n_paquetes?: string | null
+          pegado?: string | null
+          plastificado?: string | null
+          profundidad_real?: number | null
+          sustrato?: string | null
+          troquelado?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cac_resultados_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: true
+            referencedRelation: "documentos_generados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           contribuyente_especial: boolean | null
@@ -311,11 +420,14 @@ export type Database = {
       documentos_generados: {
         Row: {
           cliente_id: string | null
+          codificacion: string | null
           condiciones_pago: string | null
           created_at: string | null
           descuento: number | null
+          documento_origen_id: number | null
           estado: string | null
           extras: Json | null
+          fecha_caducidad: string | null
           fecha_emision: string | null
           id: number
           moneda: string | null
@@ -323,6 +435,7 @@ export type Database = {
           numero_documento: string
           observaciones: string | null
           productos: Json | null
+          revision: number | null
           tipo_documento: string
           total: number | null
           updated_at: string | null
@@ -331,11 +444,14 @@ export type Database = {
         }
         Insert: {
           cliente_id?: string | null
+          codificacion?: string | null
           condiciones_pago?: string | null
           created_at?: string | null
           descuento?: number | null
+          documento_origen_id?: number | null
           estado?: string | null
           extras?: Json | null
+          fecha_caducidad?: string | null
           fecha_emision?: string | null
           id?: number
           moneda?: string | null
@@ -343,6 +459,7 @@ export type Database = {
           numero_documento: string
           observaciones?: string | null
           productos?: Json | null
+          revision?: number | null
           tipo_documento: string
           total?: number | null
           updated_at?: string | null
@@ -351,11 +468,14 @@ export type Database = {
         }
         Update: {
           cliente_id?: string | null
+          codificacion?: string | null
           condiciones_pago?: string | null
           created_at?: string | null
           descuento?: number | null
+          documento_origen_id?: number | null
           estado?: string | null
           extras?: Json | null
+          fecha_caducidad?: string | null
           fecha_emision?: string | null
           id?: number
           moneda?: string | null
@@ -363,6 +483,7 @@ export type Database = {
           numero_documento?: string
           observaciones?: string | null
           productos?: Json | null
+          revision?: number | null
           tipo_documento?: string
           total?: number | null
           updated_at?: string | null
