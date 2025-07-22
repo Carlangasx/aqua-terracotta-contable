@@ -64,8 +64,42 @@ function getDocumentTitle(tipo: string): string {
     case 'REC': return 'RECIBO';
     case 'SAL': return 'SALIDA DE ALMACÉN';
     case 'NCRE': return 'NOTA DE CRÉDITO';
+    case 'NC': return 'NOTA DE CRÉDITO';
     case 'CAC': return 'CERTIFICADO DE ANÁLISIS DE CALIDAD';
+    case 'COT': return 'COTIZACIÓN';
     default: return 'COTIZACIÓN';
+  }
+}
+
+function getDocumentConditions(tipo: string): string[] {
+  switch (tipo) {
+    case 'COT':
+      return [
+        'Validez del presupuesto: 05 días.',
+        'Tiempo de entrega acordado por ambas partes, a partir de la aprobación de los artes por correo.',
+        'Forma de pago: 70% al aprobar la cotización, 30% al entregar.',
+        'La cantidad producida puede variar en un +/-5%, diferencia que se tomará en cuenta al momento de facturar.'
+      ];
+    case 'FACT':
+      return [
+        'Gracias por su preferencia.',
+        'Este documento constituye un comprobante fiscal válido.'
+      ];
+    case 'NDE':
+      return [
+        'Mercancía entregada en perfecto estado.',
+        'Favor verificar cantidad y calidad al momento de la entrega.'
+      ];
+    case 'SAL':
+      return [
+        'Salida autorizada de almacén.',
+        'Verificar inventario al momento de la salida.'
+      ];
+    default:
+      return [
+        'Documento generado por el sistema.',
+        'Verificar información antes de proceder.'
+      ];
   }
 }
 
@@ -118,196 +152,328 @@ serve(async (req) => {
     // Set default font
     doc.setFont('helvetica', 'normal');
     
-    // HEADER SECTION - Company Info
-    doc.setFontSize(16);
+    // HEADER SECTION - Company Logo and Info (Left Side)
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('LITOARTE C.A.', 20, 25);
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('RIF: J-29584577-0', 20, 32);
-    doc.text('Reg. Mercantil 1° Circunscripción Judicial del Estado Miranda', 20, 38);
-    doc.text('Tomo: 65-A-Pro, Expediente: 201.569', 20, 44);
-    doc.text('Dirección: Calle José Ignacio Liendo, Qta. Litoarte, Los Teques', 20, 50);
-    doc.text('Estado Miranda - Venezuela', 20, 56);
-    doc.text('Telf: 0212-322-2590 / 0212-322-1048', 20, 62);
-    doc.text('Email: ventas@litoarte.com.ve', 20, 68);
+    doc.text('Calle San Pascual el Carmen, Casa N° 43. Sector Sarria. Caracas. Zona Postal 1010', 20, 32);
 
-    // DOCUMENT TITLE AND NUMBER
-    doc.setFontSize(14);
+    // DOCUMENT TITLE AND NUMBER (Right Side)
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${getDocumentTitle(document.tipo_documento)} No.`, 120, 30);
-    doc.text(document.numero_documento, 120, 38);
+    const documentTitle = getDocumentTitle(document.tipo_documento);
+    doc.text(`${documentTitle} Nro.`, 120, 25);
     
-    // Date
+    // Extract year from numero_documento or use current year
+    const currentYear = new Date(document.fecha_emision).getFullYear();
+    const documentNumber = document.numero_documento.replace(/[A-Z-]/g, ''); // Remove letters and hyphens
+    doc.text(`${currentYear} ${documentNumber}`, 120, 32);
+    
+    // Date and Location
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Fecha: ${new Date(document.fecha_emision).toLocaleDateString('es-VE')}`, 120, 45);
+    const formattedDate = new Date(document.fecha_emision).toLocaleDateString('es-VE', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+    doc.text(`Caracas, ${formattedDate}`, 120, 39);
 
     // CLIENT SECTION
-    let yPos = 85;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CLIENTE:', 20, yPos);
-    
-    yPos += 8;
+    let yPos = 55;
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cliente:', 20, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Empresa: ${document.clientes.nombre_empresa}`, 20, yPos);
+    doc.text(document.clientes.nombre_empresa, 45, yPos);
+    
     yPos += 6;
-    doc.text(`RIF: ${document.clientes.rif}`, 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RIF:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(document.clientes.rif, 35, yPos);
+    
     yPos += 6;
-    doc.text(`Dirección: ${document.clientes.direccion_fiscal || 'N/A'}`, 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Contacto:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(document.clientes.persona_contacto || 'N/A', 45, yPos);
+    
     yPos += 6;
-    doc.text(`Teléfono: ${document.clientes.telefono_empresa || 'N/A'}`, 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Dirección:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    const direccion = document.clientes.direccion_fiscal || 'N/A';
+    const direccionWrapped = direccion.length > 60 ? direccion.substring(0, 60) + '...' : direccion;
+    doc.text(direccionWrapped, 48, yPos);
+    
+    yPos += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Teléfono:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(document.clientes.telefono_empresa || 'N/A', 48, yPos);
+    
+    yPos += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Correo electrónico:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(document.clientes.correo || 'N/A', 65, yPos);
 
-    // PRODUCTS TABLE
+    // PRODUCTS/CONTENT TABLE SECTION
     yPos += 15;
     
-    // Table headers with background
-    const tableStartY = yPos;
-    const rowHeight = 8;
-    const colWidths = [20, 80, 25, 25, 30];
-    const tableWidth = colWidths.reduce((sum, width) => sum + width, 0);
-    
-    // Header background (light gray)
-    doc.setFillColor(230, 230, 230);
-    doc.rect(20, yPos, tableWidth, rowHeight, 'F');
-    
-    // Header borders
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    doc.rect(20, yPos, tableWidth, rowHeight);
-    
-    // Header text
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CANT.', 22, yPos + 5);
-    doc.text('DESCRIPCIÓN', 42, yPos + 5);
-    doc.text('P. UNIT.', 127, yPos + 5);
-    doc.text('P. TOTAL', 155, yPos + 5);
-    
-    yPos += rowHeight;
-    
-    // Parse products and extras
-    const productos = parseJsonField(document.productos);
-    const extras = parseJsonField(document.extras);
-    
-    const allItems = [];
-    productos.forEach((p: any) => {
-      allItems.push({
-        descripcion: p.nombre || p.descripcion || 'Producto sin nombre',
-        cantidad: p.cantidad || 1,
-        precio_unitario: p.precio_unitario || p.precio || 0,
-        subtotal: p.subtotal || 0
-      });
-    });
-    
-    extras.forEach((e: any) => {
-      allItems.push({
-        descripcion: e.nombre || e.descripcion || `${e.tipo || 'Extra'}`,
-        cantidad: e.cantidad || 1,
-        precio_unitario: e.precio || 0,
-        subtotal: e.subtotal || e.precio || 0
-      });
-    });
-    
-    // Table rows
-    doc.setFont('helvetica', 'normal');
-    allItems.forEach((item, index) => {
-      // Alternate row background
-      if (index % 2 === 1) {
-        doc.setFillColor(250, 250, 250);
-        doc.rect(20, yPos, tableWidth, rowHeight, 'F');
-      }
+    // Check if this is a CAC document to handle it differently
+    if (document.tipo_documento === 'CAC') {
+      // For CAC documents, show technical parameters instead of products table
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PARÁMETROS TÉCNICOS ANALIZADOS:', 20, yPos);
+      yPos += 10;
       
-      // Row border
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      // Fetch CAC results if available (this would come from cac_resultados table)
+      doc.text('Dimensiones físicas:', 20, yPos);
+      yPos += 6;
+      doc.text('• Ancho real: N/A', 25, yPos);
+      yPos += 6;
+      doc.text('• Alto real: N/A', 25, yPos);
+      yPos += 6;
+      doc.text('• Profundidad real: N/A', 25, yPos);
+      yPos += 10;
+      
+      doc.text('Especificaciones técnicas:', 20, yPos);
+      yPos += 6;
+      doc.text('• Material/Sustrato: N/A', 25, yPos);
+      yPos += 6;
+      doc.text('• Calibre: N/A', 25, yPos);
+      yPos += 6;
+      doc.text('• Colores: N/A', 25, yPos);
+      yPos += 6;
+      doc.text('• Barniz: N/A', 25, yPos);
+      yPos += 6;
+      doc.text('• Plastificado: N/A', 25, yPos);
+      yPos += 10;
+      
+      if (document.observaciones) {
+        doc.text('Observaciones:', 20, yPos);
+        yPos += 6;
+        const obsWrapped = document.observaciones.length > 80 ? document.observaciones.substring(0, 80) + '...' : document.observaciones;
+        doc.text(obsWrapped, 25, yPos);
+        yPos += 10;
+      }
+    } else {
+      // Regular products table for other document types
+      const tableStartY = yPos;
+      const rowHeight = 8;
+      const colWidths = [15, 20, 60, 20, 20, 25, 30]; // CÓDIGO, DESCRIPCIÓN, EXTRA, TRANSPORTE, UNIDADES, COSTO UNIT, TOTAL
+      const tableWidth = colWidths.reduce((sum, width) => sum + width, 0);
+      
+      // Header background (light gray)
+      doc.setFillColor(220, 220, 220);
+      doc.rect(20, yPos, tableWidth, rowHeight, 'F');
+      
+      // Header borders
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
       doc.rect(20, yPos, tableWidth, rowHeight);
       
-      // Cell content
-      doc.text(item.cantidad.toString(), 22, yPos + 5);
+      // Draw vertical lines for columns
+      let xPos = 20;
+      for (let i = 0; i < colWidths.length - 1; i++) {
+        xPos += colWidths[i];
+        doc.line(xPos, yPos, xPos, yPos + rowHeight);
+      }
       
-      // Wrap description text if too long
-      const description = item.descripcion.length > 45 ? 
-        item.descripcion.substring(0, 45) + '...' : item.descripcion;
-      doc.text(description, 42, yPos + 5);
-      
-      doc.text(`$${item.precio_unitario.toFixed(2)}`, 127, yPos + 5);
-      doc.text(`$${item.subtotal.toFixed(2)}`, 155, yPos + 5);
+      // Header text
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CÓDIGO', 22, yPos + 5);
+      doc.text('DESCRIPCIÓN', 42, yPos + 5);
+      doc.text('EXTRA', 105, yPos + 5);
+      doc.text('TRANSPORTE', 127, yPos + 5);
+      doc.text('UNIDADES', 150, yPos + 5);
+      doc.text('COSTO UNITARIO', 172, yPos + 5);
+      doc.text('TOTAL', 200, yPos + 5);
       
       yPos += rowHeight;
-    });
-    
-    // TOTALS SECTION
-    yPos += 10;
-    
-    const subtotal = document.total / (1 - (document.descuento / 100));
-    const descuentoAmount = subtotal * (document.descuento / 100);
-    const iva = document.total * 0.16; // 16% IVA
-    const totalConIva = document.total + iva;
-    
-    // Totals box
-    const totalsX = 130;
-    const totalsWidth = 60;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    doc.text('SUB-TOTAL:', totalsX, yPos);
-    doc.text(`$${subtotal.toFixed(2)}`, totalsX + 35, yPos);
-    yPos += 6;
-    
-    if (document.descuento > 0) {
-      doc.text(`DESCUENTO (${document.descuento}%):`, totalsX, yPos);
-      doc.text(`-$${descuentoAmount.toFixed(2)}`, totalsX + 35, yPos);
-      yPos += 6;
+      
+      // Parse products and extras
+      const productos = parseJsonField(document.productos);
+      const extras = parseJsonField(document.extras);
+      
+      const allItems = [];
+      let itemIndex = 1;
+      
+      // Add products
+      productos.forEach((p: any) => {
+        allItems.push({
+          codigo: `P${itemIndex.toString().padStart(3, '0')}`,
+          descripcion: p.nombre || p.descripcion || 'Producto sin nombre',
+          extra: '',
+          transporte: '',
+          cantidad: p.cantidad || 1,
+          precio_unitario: p.precio_unitario || p.precio || 0,
+          subtotal: p.subtotal || 0
+        });
+        itemIndex++;
+      });
+      
+      // Add extras
+      extras.forEach((e: any) => {
+        allItems.push({
+          codigo: `E${itemIndex.toString().padStart(3, '0')}`,
+          descripcion: e.nombre || e.descripcion || `${e.tipo || 'Extra'}`,
+          extra: 'X',
+          transporte: e.tipo === 'transporte' ? 'X' : '',
+          cantidad: e.cantidad || 1,
+          precio_unitario: e.precio || 0,
+          subtotal: e.subtotal || e.precio || 0
+        });
+        itemIndex++;
+      });
+      
+      // Table rows
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      allItems.forEach((item, index) => {
+        // Alternate row background
+        if (index % 2 === 1) {
+          doc.setFillColor(245, 245, 245);
+          doc.rect(20, yPos, tableWidth, rowHeight, 'F');
+        }
+        
+        // Row border
+        doc.rect(20, yPos, tableWidth, rowHeight);
+        
+        // Draw vertical lines for columns
+        xPos = 20;
+        for (let i = 0; i < colWidths.length - 1; i++) {
+          xPos += colWidths[i];
+          doc.line(xPos, yPos, xPos, yPos + rowHeight);
+        }
+        
+        // Cell content
+        doc.text(item.codigo, 22, yPos + 5);
+        
+        // Wrap description text if too long
+        const description = item.descripcion.length > 35 ? 
+          item.descripcion.substring(0, 35) + '...' : item.descripcion;
+        doc.text(description, 42, yPos + 5);
+        
+        doc.text(item.extra, 107, yPos + 5);
+        doc.text(item.transporte, 135, yPos + 5);
+        doc.text(item.cantidad.toString(), 152, yPos + 5);
+        doc.text(`$${item.precio_unitario.toFixed(2)}`, 175, yPos + 5);
+        doc.text(`$${item.subtotal.toFixed(2)}`, 202, yPos + 5);
+        
+        yPos += rowHeight;
+      });
     }
     
-    doc.text('I.V.A. (16%): ', totalsX, yPos);
-    doc.text(`$${iva.toFixed(2)}`, totalsX + 35, yPos);
-    yPos += 6;
+    // TOTALS SECTION - Only for non-CAC documents
+    if (document.tipo_documento !== 'CAC') {
+      yPos += 10;
+      
+      // Calculate totals properly
+      const baseTotal = document.total || 0;
+      const descuentoAmount = (document.descuento / 100) * baseTotal;
+      const subtotalAfterDiscount = baseTotal - descuentoAmount;
+      
+      // Only calculate IVA for invoices (FACT)
+      const shouldCalculateIVA = document.tipo_documento === 'FACT';
+      const iva = shouldCalculateIVA ? subtotalAfterDiscount * 0.16 : 0;
+      const finalTotal = subtotalAfterDiscount + iva;
+      
+      // Totals box positioned to the right
+      const totalsX = 140;
+      const totalsBoxWidth = 50;
+      const totalsBoxHeight = shouldCalculateIVA ? 30 : 20;
+      
+      // Draw totals box
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
+      doc.rect(totalsX, yPos, totalsBoxWidth, totalsBoxHeight);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      
+      let totalsYPos = yPos + 6;
+      doc.text('Subtotal:', totalsX + 2, totalsYPos);
+      doc.text(`$${baseTotal.toFixed(2)}`, totalsX + 25, totalsYPos);
+      totalsYPos += 5;
+      
+      if (document.descuento > 0) {
+        doc.text(`Desc. (${document.descuento}%):`, totalsX + 2, totalsYPos);
+        doc.text(`-$${descuentoAmount.toFixed(2)}`, totalsX + 25, totalsYPos);
+        totalsYPos += 5;
+      }
+      
+      if (shouldCalculateIVA) {
+        doc.text('IVA (16%):', totalsX + 2, totalsYPos);
+        doc.text(`$${iva.toFixed(2)}`, totalsX + 25, totalsYPos);
+        totalsYPos += 5;
+      }
+      
+      // Final total line
+      doc.setFont('helvetica', 'bold');
+      doc.line(totalsX + 2, totalsYPos - 1, totalsX + totalsBoxWidth - 2, totalsYPos - 1);
+      doc.text('TOTAL:', totalsX + 2, totalsYPos + 3);
+      doc.text(`$${finalTotal.toFixed(2)}`, totalsX + 25, totalsYPos + 3);
+      
+      yPos += totalsBoxHeight + 10;
+    }
     
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL:', totalsX, yPos);
-    doc.text(`$${totalConIva.toFixed(2)}`, totalsX + 35, yPos);
+    // CONDITIONS SECTION
+    const conditions = getDocumentConditions(document.tipo_documento);
+    if (conditions.length > 0 && document.tipo_documento !== 'CAC') {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      
+      conditions.forEach(condition => {
+        doc.text(condition, 20, yPos);
+        yPos += 6;
+      });
+      yPos += 5;
+    }
     
-    // FOOTER SECTION
-    yPos += 20;
+    // SIGNATURE SECTION
+    if (document.tipo_documento === 'COT' || document.tipo_documento === 'FACT') {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Firma y Sello:', 20, yPos);
+      doc.line(20, yPos + 15, 90, yPos + 15); // Signature line
+      yPos += 25;
+    }
     
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    
-    // Validity and conditions
-    doc.text('Esta cotización tiene una vigencia de 15 días.', 20, yPos);
-    yPos += 6;
-    doc.text(`Condiciones de Pago: ${document.condiciones_pago}`, 20, yPos);
-    yPos += 10;
-    
-    // Signature section
-    doc.text('Firma y Sello:', 20, yPos);
-    doc.line(20, yPos + 15, 90, yPos + 15); // Signature line
-    
-    // Company footer
-    yPos += 25;
+    // COMPANY FOOTER
     doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
     doc.text('LITOARTE C.A. - Especialistas en Impresión y Packaging', 20, yPos);
     yPos += 4;
-    doc.text('www.litoarte.com.ve', 20, yPos);
+    doc.text('Teléfono: (0212) 322-2590 / Email: ventas@litoarte.com.ve', 20, yPos);
     
-    // Legal footer
-    yPos = 280; // Bottom of page
+    // LEGAL FOOTER at bottom
     doc.setFontSize(7);
-    doc.text('Documento generado por PrintMatch PRO', 20, yPos);
+    doc.text('Documento generado por PrintMatch PRO - ContaSimple', 20, 285);
 
     // Generate PDF buffer
     const pdfArrayBuffer = doc.output('arraybuffer');
     const pdfBuffer = new Uint8Array(pdfArrayBuffer);
+    
+    // Create structured filename: [TIPO]_[NUMERO]_[RAZONSOCIAL].pdf
+    const clientName = document.clientes.nombre_empresa.replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `${document.tipo_documento}_${document.numero_documento.replace(/[^a-zA-Z0-9]/g, '_')}_${clientName}.pdf`;
 
     return new Response(pdfBuffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${document.tipo_documento}-${document.numero_documento}.pdf"`,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
       },
     });
 
