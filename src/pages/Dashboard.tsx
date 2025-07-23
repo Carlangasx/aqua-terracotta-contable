@@ -3,27 +3,27 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/MainLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calculator, Users, ShoppingCart, Package, AlertTriangle, TrendingUp, LogOut } from 'lucide-react';
+import { 
+  Calculator, Users, ShoppingCart, Package, LogOut, 
+  DollarSign, Truck, FileText, BarChart3, Settings, 
+  TrendingUp, Boxes
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface DashboardStats {
-  totalClientes: number;
   ventasDelMes: number;
-  productosConBajoStock: number;
-  totalProductos: number;
+  inventarioActual: number;
+  gastosDelMes: number;
 }
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
-    totalClientes: 0,
     ventasDelMes: 0,
-    productosConBajoStock: 0,
-    totalProductos: 0,
+    inventarioActual: 0,
+    gastosDelMes: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -35,34 +35,29 @@ export default function Dashboard() {
 
   const loadStats = async () => {
     try {
-      // Total clientes
-      const { count: clientesCount } = await supabase
-        .from('clientes')
-        .select('*', { count: 'exact', head: true });
-
-      // Ventas del mes actual
       const currentMonth = new Date().toISOString().slice(0, 7);
-      const { count: ventasCount } = await supabase
-        .from('ventas')
-        .select('*', { count: 'exact', head: true })
-        .gte('fecha', `${currentMonth}-01`);
 
-      // Total productos
-      const { count: productosCount } = await supabase
+      // Ventas del mes actual (suma total de documentos FACT)
+      const { data: facturas } = await supabase
+        .from('documentos_generados')
+        .select('total')
+        .eq('tipo_documento', 'FACT')
+        .gte('fecha_emision', `${currentMonth}-01`);
+
+      const ventasDelMes = facturas?.reduce((sum, factura) => sum + (factura.total || 0), 0) || 0;
+
+      // Inventario actual (total de productos en stock)
+      const { count: inventarioCount } = await supabase
         .from('inventario_consumibles')
         .select('*', { count: 'exact', head: true });
 
-      // Productos con bajo stock
-      const { count: bajoStockCount } = await supabase
-        .from('inventario_consumibles')
-        .select('*', { count: 'exact', head: true })
-        .filter('cantidad_disponible', 'lte', 'stock_minimo');
+      // Gastos del mes (documentos de compras/gastos - placeholder por ahora)
+      const gastosDelMes = 0; // TODO: Implementar cuando exista tabla de compras
 
       setStats({
-        totalClientes: clientesCount || 0,
-        ventasDelMes: ventasCount || 0,
-        productosConBajoStock: bajoStockCount || 0,
-        totalProductos: productosCount || 0,
+        ventasDelMes,
+        inventarioActual: inventarioCount || 0,
+        gastosDelMes,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -79,22 +74,89 @@ export default function Dashboard() {
     await signOut();
   };
 
+  const modules = [
+    {
+      name: 'Clientes',
+      icon: Users,
+      path: '/clientes',
+      color: 'bg-green-100 hover:bg-green-200',
+      textColor: 'text-green-700'
+    },
+    {
+      name: 'Ventas',
+      icon: TrendingUp,
+      path: '/ventas',
+      color: 'bg-blue-100 hover:bg-blue-200',
+      textColor: 'text-blue-700'
+    },
+    {
+      name: 'Compras',
+      icon: ShoppingCart,
+      path: '/compras',
+      color: 'bg-yellow-100 hover:bg-yellow-200',
+      textColor: 'text-yellow-700'
+    },
+    {
+      name: 'Inventario',
+      icon: Package,
+      path: '/inventario',
+      color: 'bg-gray-100 hover:bg-gray-200',
+      textColor: 'text-gray-700'
+    },
+    {
+      name: 'Documentos',
+      icon: FileText,
+      path: '/documentos',
+      color: 'bg-purple-100 hover:bg-purple-200',
+      textColor: 'text-purple-700'
+    },
+    {
+      name: 'Reportes',
+      icon: BarChart3,
+      path: '/reportes',
+      color: 'bg-orange-100 hover:bg-orange-200',
+      textColor: 'text-orange-700'
+    },
+    {
+      name: 'Configuración',
+      icon: Settings,
+      path: '/configuracion',
+      color: 'bg-gray-100 hover:bg-gray-200',
+      textColor: 'text-gray-700'
+    },
+    {
+      name: 'Productos Elaborados',
+      icon: Boxes,
+      path: '/productos-elaborados',
+      color: 'bg-indigo-100 hover:bg-indigo-200',
+      textColor: 'text-indigo-700'
+    },
+  ];
+
   return (
     <MainLayout>
-      <div className="min-h-screen bg-muted/30">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         {/* Header */}
-        <div className="bg-card border-b">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="bg-primary/10 p-2 rounded-lg">
-                <Calculator className="h-6 w-6 text-primary" />
+        <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-sm">
+          <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-br from-primary to-primary/80 p-3 rounded-2xl shadow-lg">
+                <Calculator className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-primary">ContaSimple</h1>
-                <p className="text-sm text-muted-foreground">Gestión Contable Inteligente</p>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  ContaSimple
+                </h1>
+                <p className="text-muted-foreground font-medium">
+                  Sistema ERP para Imprentas
+                </p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleSignOut}>
+            <Button 
+              variant="outline" 
+              onClick={handleSignOut}
+              className="bg-white/50 hover:bg-white/80 backdrop-blur-sm border-white/30"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Cerrar Sesión
             </Button>
@@ -102,136 +164,101 @@ export default function Dashboard() {
         </div>
 
         <div className="container mx-auto px-4 py-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
-                <Users className="h-4 w-4 text-primary" />
+          {/* Métricas Principales */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {/* Ventas del Mes */}
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="bg-green-500/10 p-3 rounded-2xl">
+                    <DollarSign className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-green-700 mb-1">Ventas del Mes</p>
+                    <p className="text-3xl font-bold text-green-800">
+                      ${stats.ventasDelMes.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalClientes}</div>
-                <p className="text-xs text-muted-foreground">
-                  Clientes registrados
+              <CardContent className="pt-0">
+                <p className="text-sm text-green-600/80">
+                  Total facturado este mes
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ventas del Mes</CardTitle>
-                <TrendingUp className="h-4 w-4 text-primary" />
+            {/* Inventario Actual */}
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="bg-blue-500/10 p-3 rounded-2xl">
+                    <Package className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-blue-700 mb-1">Inventario Actual</p>
+                    <p className="text-3xl font-bold text-blue-800">
+                      {stats.inventarioActual}
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.ventasDelMes}</div>
-                <p className="text-xs text-muted-foreground">
-                  Facturas emitidas este mes
+              <CardContent className="pt-0">
+                <p className="text-sm text-blue-600/80">
+                  Productos en stock
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Productos</CardTitle>
-                <Package className="h-4 w-4 text-primary" />
+            {/* Gastos del Mes */}
+            <Card className="bg-gradient-to-br from-pink-50 to-pink-100 border-pink-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="bg-pink-500/10 p-3 rounded-2xl">
+                    <Truck className="h-8 w-8 text-pink-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-pink-700 mb-1">Gastos del Mes</p>
+                    <p className="text-3xl font-bold text-pink-800">
+                      ${stats.gastosDelMes.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalProductos}</div>
-                <p className="text-xs text-muted-foreground">
-                  En inventario
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Bajo Stock</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-destructive">{stats.productosConBajoStock}</div>
-                <p className="text-xs text-muted-foreground">
-                  Productos con stock bajo
+              <CardContent className="pt-0">
+                <p className="text-sm text-pink-600/80">
+                  Compras y gastos
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Navigation Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link to="/clientes">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-primary/10 p-3 rounded-lg">
-                      <Users className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle>Gestión de Clientes</CardTitle>
-                      <CardDescription>
-                        Administrar información de clientes
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Crear, editar y consultar datos de clientes. Ver historial de ventas por cliente.
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link to="/ventas">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-secondary/50 p-3 rounded-lg">
-                      <ShoppingCart className="h-6 w-6 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle>Registro de Ventas</CardTitle>
-                      <CardDescription>
-                        Generar facturas y registrar ventas
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Crear facturas, seleccionar clientes y productos. Calcular impuestos automáticamente.
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link to="/inventario">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-accent/50 p-3 rounded-lg">
-                      <Package className="h-6 w-6 text-accent-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle>Inventario</CardTitle>
-                      <CardDescription>
-                        Control de productos y stock
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Gestionar productos, precios, stock y categorías. Alertas de stock bajo.
-                  </p>
-                  {stats.productosConBajoStock > 0 && (
-                    <Badge variant="destructive" className="mt-2">
-                      {stats.productosConBajoStock} productos con stock bajo
-                    </Badge>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
+          {/* Navegación de Módulos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {modules.map((module) => {
+              const IconComponent = module.icon;
+              return (
+                <Link key={module.name} to={module.path}>
+                  <Card className={`${module.color} border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer backdrop-blur-sm`}>
+                    <CardContent className="p-6 text-center">
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="bg-white/50 p-4 rounded-2xl shadow-sm">
+                          <IconComponent className={`h-8 w-8 ${module.textColor}`} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg ${module.textColor} mb-1`}>
+                            {module.name}
+                          </h3>
+                          <p className={`text-sm ${module.textColor}/70`}>
+                            Gestionar {module.name.toLowerCase()}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
