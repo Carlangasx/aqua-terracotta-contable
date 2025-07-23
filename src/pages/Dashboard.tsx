@@ -225,8 +225,8 @@ export default function Dashboard() {
         {/* Header */}
         <div className="bg-white shadow-sm border-b border">
           <div className="px-8 py-6">
-            <h1 className="text-3xl font-bold text-midnight-navy">Dashboard</h1>
-            <p className="text-slate-gray mt-1">Resumen general del sistema</p>
+            <h1 className="text-3xl font-bold text-midnight-navy">Sistema Administrativo</h1>
+            <p className="text-slate-gray mt-1">Soluciones Gráficas Litoarte, C. A.</p>
           </div>
         </div>
 
