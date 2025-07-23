@@ -83,51 +83,58 @@ export default function Dashboard() {
       name: 'Clientes',
       icon: Users,
       path: '/clientes',
-      color: '#58A0C8',
+      bgColor: 'bg-mint-wave',
+      textColor: 'text-midnight-navy',
       description: 'Gestionar clientes'
     },
     {
       name: 'Documentos',
       icon: FileText,
       path: '/documentos',
-      color: '#34699A',
+      bgColor: 'bg-glacier-blue',
+      textColor: 'text-midnight-navy',
       description: 'Crear y gestionar documentos'
     },
     {
       name: 'Compras',
       icon: ShoppingCart,
       path: '/compras',
-      color: '#113F67',
+      bgColor: 'bg-midnight-navy',
+      textColor: 'text-white',
       description: 'Gestionar compras'
     },
     {
       name: 'Inventario',
       icon: Package,
       path: '/inventario',
-      color: '#FDF5AA',
+      bgColor: 'bg-off-white',
+      textColor: 'text-midnight-navy',
       description: 'Control de inventario',
-      textDark: true
+      hasBorder: true
     },
     {
       name: 'Reportes',
       icon: BarChart3,
       path: '/reportes',
-      color: '#34699A',
+      bgColor: 'bg-glacier-blue',
+      textColor: 'text-midnight-navy',
       description: 'Análisis y reportes'
     },
     {
       name: 'Configuración',
       icon: Settings,
       path: '/configuracion',
-      color: '#E5E7EB',
+      bgColor: 'bg-off-white',
+      textColor: 'text-slate-gray',
       description: 'Configuración del sistema',
-      textDark: true
+      hasBorder: true
     },
     {
       name: 'Productos Elaborados',
       icon: Boxes,
       path: '/productos-elaborados',
-      color: '#58A0C8',
+      bgColor: 'bg-mint-wave',
+      textColor: 'text-midnight-navy',
       description: 'Catálogo de productos'
     },
   ];
@@ -144,21 +151,21 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#FDF5AA]" style={{ fontFamily: 'Inter, Satoshi, sans-serif' }}>
+    <div className="flex min-h-screen bg-off-white" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
       {/* Sidebar */}
-      <div className={`bg-[#113F67] text-white transition-all duration-300 flex flex-col ${
+      <div className={`bg-midnight-navy text-white transition-all duration-300 flex flex-col ${
         sidebarCollapsed ? 'w-16' : 'w-64'
       }`}>
         {/* Logo and Toggle */}
-        <div className="flex items-center justify-between p-4 border-b border-[#34699A]/30">
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
           {!sidebarCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="bg-[#58A0C8] p-2 rounded-lg">
-                <Calculator className="h-6 w-6 text-white" />
+              <div className="bg-mint-wave p-2 rounded-lg">
+                <Calculator className="h-6 w-6 text-midnight-navy" />
               </div>
               <div>
                 <h1 className="text-lg font-bold">ContaSimple</h1>
-                <p className="text-xs text-[#58A0C8]">ERP Imprentas</p>
+                <p className="text-xs text-mint-wave">ERP Imprentas</p>
               </div>
             </div>
           )}
@@ -166,7 +173,7 @@ export default function Dashboard() {
             variant="ghost"
             size="sm"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="text-white hover:bg-[#34699A] hover:text-white"
+            className="text-white hover:bg-white/10 hover:text-white"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -180,8 +187,8 @@ export default function Dashboard() {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center px-4 py-3 text-sm transition-colors hover:bg-[#34699A] group relative ${
-                  item.active ? 'bg-[#34699A] border-r-2 border-[#58A0C8]' : ''
+                className={`flex items-center px-4 py-3 text-sm transition-all duration-200 hover:bg-white/10 group relative ${
+                  item.active ? 'bg-mint-wave/20 border-r-2 border-mint-wave' : ''
                 }`}
               >
                 <IconComponent className={`h-5 w-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'}`} />
@@ -189,7 +196,7 @@ export default function Dashboard() {
                 
                 {/* Tooltip for collapsed state */}
                 {sidebarCollapsed && (
-                  <div className="absolute left-16 bg-gray-900 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  <div className="absolute left-16 bg-midnight-navy/90 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 border border-white/20">
                     {item.name}
                   </div>
                 )}
@@ -199,11 +206,11 @@ export default function Dashboard() {
         </nav>
 
         {/* User Actions */}
-        <div className="border-t border-[#34699A]/30 p-4">
+        <div className="border-t border-white/10 p-4">
           <Button
             variant="ghost"
             onClick={handleSignOut}
-            className={`w-full text-white hover:bg-[#34699A] hover:text-white ${
+            className={`w-full text-white hover:bg-white/10 hover:text-white ${
               sidebarCollapsed ? 'px-2' : 'justify-start'
             }`}
           >
@@ -216,10 +223,10 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="bg-white shadow-sm border-b border">
           <div className="px-8 py-6">
-            <h1 className="text-3xl font-bold text-[#113F67]">Dashboard</h1>
-            <p className="text-gray-600 mt-1">Resumen general del sistema</p>
+            <h1 className="text-3xl font-bold text-midnight-navy">Dashboard</h1>
+            <p className="text-slate-gray mt-1">Resumen general del sistema</p>
           </div>
         </div>
 
@@ -228,16 +235,16 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Ventas del Mes */}
             <Card 
-              className="transition-all duration-300 hover:scale-[1.03] cursor-pointer shadow-md rounded-2xl border-0"
-              style={{ backgroundColor: '#34699A' }}
+              className="transition-all duration-300 ease-in-out hover:scale-[1.03] cursor-pointer shadow-lg rounded-2xl border-0 bg-mint-wave animate-fade-in"
+              style={{ animationDelay: '0ms' }}
             >
               <CardContent className="p-6">
-                <div className="flex items-center justify-between text-white">
-                  <div className="bg-white/20 p-3 rounded-xl">
+                <div className="flex items-center justify-between text-midnight-navy">
+                  <div className="bg-midnight-navy/10 p-3 rounded-xl">
                     <DollarSign className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium opacity-90 mb-1">Ventas del Mes</p>
+                    <p className="text-sm font-semibold opacity-80 mb-1">Ventas del Mes</p>
                     <p className="text-3xl font-bold">
                       ${stats.ventasDelMes.toLocaleString()}
                     </p>
@@ -246,18 +253,18 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Inventario */}
+            {/* Inventario Actual */}
             <Card 
-              className="transition-all duration-300 hover:scale-[1.03] cursor-pointer shadow-md rounded-2xl border-0"
-              style={{ backgroundColor: '#58A0C8' }}
+              className="transition-all duration-300 ease-in-out hover:scale-[1.03] cursor-pointer shadow-lg rounded-2xl border-0 bg-glacier-blue animate-fade-in"
+              style={{ animationDelay: '100ms' }}
             >
               <CardContent className="p-6">
-                <div className="flex items-center justify-between text-white">
-                  <div className="bg-white/20 p-3 rounded-xl">
+                <div className="flex items-center justify-between text-midnight-navy">
+                  <div className="bg-midnight-navy/10 p-3 rounded-xl">
                     <Package className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium opacity-90 mb-1">Inventario</p>
+                    <p className="text-sm font-semibold opacity-80 mb-1">Inventario Actual</p>
                     <p className="text-3xl font-bold">
                       {stats.inventarioActual}
                     </p>
@@ -268,8 +275,8 @@ export default function Dashboard() {
 
             {/* Gastos del Mes */}
             <Card 
-              className="transition-all duration-300 hover:scale-[1.03] cursor-pointer shadow-md rounded-2xl border-0"
-              style={{ backgroundColor: '#113F67' }}
+              className="transition-all duration-300 ease-in-out hover:scale-[1.03] cursor-pointer shadow-lg rounded-2xl border-0 bg-coral-light animate-fade-in"
+              style={{ animationDelay: '200ms' }}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between text-white">
@@ -277,7 +284,7 @@ export default function Dashboard() {
                     <Truck className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium opacity-90 mb-1">Gastos del Mes</p>
+                    <p className="text-sm font-semibold opacity-90 mb-1">Gastos del Mes</p>
                     <p className="text-3xl font-bold">
                       ${stats.gastosDelMes.toLocaleString()}
                     </p>
@@ -296,22 +303,23 @@ export default function Dashboard() {
                   key={module.name} 
                   to={module.path}
                   className="block animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  style={{ animationDelay: `${(index + 3) * 100}ms` }}
                 >
                   <Card 
-                    className="transition-all duration-300 hover:scale-[1.03] hover:shadow-lg cursor-pointer rounded-xl shadow-md border-0 h-32"
-                    style={{ backgroundColor: module.color }}
+                    className={`transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl cursor-pointer rounded-xl shadow-md h-32 ${module.bgColor} ${
+                      module.hasBorder ? 'border border-muted' : 'border-0'
+                    }`}
                   >
                     <CardContent className="p-6 flex items-center justify-center h-full">
                       <div className="text-center space-y-3">
-                        <div className={`${module.textDark ? 'bg-gray-800/10' : 'bg-white/20'} p-3 rounded-lg inline-flex`}>
-                          <IconComponent className={`h-6 w-6 ${module.textDark ? 'text-gray-800' : 'text-white'}`} />
+                        <div className={`${module.textColor === 'text-white' ? 'bg-white/20' : 'bg-midnight-navy/10'} p-3 rounded-lg inline-flex`}>
+                          <IconComponent className={`h-6 w-6 ${module.textColor}`} />
                         </div>
                         <div>
-                          <h3 className={`font-bold text-sm ${module.textDark ? 'text-gray-800' : 'text-white'}`}>
+                          <h3 className={`font-bold text-sm ${module.textColor}`}>
                             {module.name}
                           </h3>
-                          <p className={`text-xs mt-1 ${module.textDark ? 'text-gray-600' : 'text-white/80'}`}>
+                          <p className={`text-xs mt-1 ${module.textColor === 'text-white' ? 'text-white/80' : 'text-slate-gray'}`}>
                             {module.description}
                           </p>
                         </div>

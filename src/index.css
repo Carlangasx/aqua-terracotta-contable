@@ -8,61 +8,61 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Verde menta #E6F4EA base */
-    --background: 130 30% 96%;
-    --foreground: 0 0% 20%;
+    /* Professional ERP Color Palette */
+    /* Fondo general: #F8FAFC (Off-White) */
+    --background: 210 20% 98%;
+    /* Texto principal: #1F2937 (Charcoal Gray) */
+    --foreground: 212 84% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 212 84% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+    --popover-foreground: 212 84% 15%;
 
-    /* Verde menta como primary */
-    --primary: 130 25% 70%;
+    /* Primario: #1E293B (Midnight Navy) */
+    --primary: 222 84% 17%;
     --primary-foreground: 0 0% 100%;
 
-    /* Terracota suave #FBE3D2 como secondary */
-    --secondary: 25 50% 90%;
-    --secondary-foreground: 25 30% 30%;
+    /* Secundario: #E0F2FE (Glacier Blue) */
+    --secondary: 192 81% 94%;
+    --secondary-foreground: 222 84% 17%;
 
-    /* Gris claro #F4F4F4 como muted */
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    /* Acento: #99F6E4 (Mint Wave) */
+    --accent: 162 85% 78%;
+    --accent-foreground: 222 84% 17%;
 
-    /* Terracota como accent */
-    --accent: 25 50% 85%;
-    --accent-foreground: 25 30% 30%;
+    /* Bordes: #E5E7EB (Cloud Gray) */
+    --muted: 220 14% 92%;
+    --muted-foreground: 215 16% 47%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 130 15% 88%;
-    --input: 130 20% 94%;
-    --ring: 130 25% 70%;
+    /* Bordes y divisores: #E5E7EB (Cloud Gray) */
+    --border: 220 14% 92%;
+    --input: 220 14% 92%;
+    --ring: 222 84% 17%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Sidebar con la paleta nueva */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 130 25% 70%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 50% 90%;
-    --sidebar-accent-foreground: 25 30% 30%;
-    --sidebar-border: 130 15% 88%;
-    --sidebar-ring: 130 25% 70%;
+    /* Sidebar con el nuevo esquema */
+    --sidebar-background: 222 84% 17%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 162 85% 78%;
+    --sidebar-primary-foreground: 222 84% 17%;
+    --sidebar-accent: 192 81% 94%;
+    --sidebar-accent-foreground: 222 84% 17%;
+    --sidebar-border: 220 14% 92%;
+    --sidebar-ring: 162 85% 78%;
 
-    /* Colores pasteles para PrintMatch */
-    --green-50: 120 60% 97%;
-    --green-100: 120 40% 92%;
-    --green-200: 120 30% 85%;
-    --terracotta-50: 15 60% 97%;
-    --terracotta-100: 15 50% 92%;
-    --terracotta-200: 15 40% 85%;
-    --ochre-50: 45 60% 97%;
-    --ochre-100: 45 50% 92%;
-    --ochre-200: 45 40% 85%;
+    /* KPI Cards específicos */
+    --mint-wave: 162 85% 78%;        /* #99F6E4 */
+    --glacier-blue: 192 81% 94%;     /* #E0F2FE */
+    --coral-light: 0 87% 80%;        /* #FCA5A5 */
+    --midnight-navy: 222 84% 17%;    /* #1E293B */
+    --slate-gray: 215 16% 47%;       /* #64748B */
+    --off-white: 210 20% 98%;        /* #F8FAFC */
   }
 
   .dark {
