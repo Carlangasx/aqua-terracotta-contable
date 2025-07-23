@@ -164,7 +164,7 @@ export default function Dashboard() {
                 <Calculator className="h-6 w-6 text-midnight-navy" />
               </div>
               <div>
-                <h1 className="text-lg font-bold">ContaSimple</h1>
+                <h1 className="text-lg font-bold">Pliego360</h1>
                 <p className="text-xs text-mint-wave">ERP Imprentas</p>
               </div>
             </div>

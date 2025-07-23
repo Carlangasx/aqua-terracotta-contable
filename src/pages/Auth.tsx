@@ -62,7 +62,7 @@ export default function Auth() {
                 <Calculator className="h-8 w-8 text-midnight-navy" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-midnight-navy">ContaSimple</CardTitle>
+            <CardTitle className="text-2xl font-bold text-midnight-navy">Pliego360</CardTitle>
             <CardDescription className="text-slate-gray">
               Sistema ERP para Imprentas
             </CardDescription>

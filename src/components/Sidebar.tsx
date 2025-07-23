@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings, Plus, List } from 'lucide-react';
@@ -38,7 +39,7 @@ export function Sidebar() {
     <div className="flex h-full flex-col bg-midnight-navy">
       <div className="flex h-14 items-center border-b border-white/10 px-4">
         <Calculator className="h-6 w-6 text-mint-wave mr-2" />
-        <span className="font-semibold text-white">ContaSimple</span>
+        <span className="font-semibold text-white">Pliego360</span>
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => {
