@@ -1,84 +1,73 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Paleta oficial Odoo aplicada al sistema de diseño ERP */
 
 @layer base {
   :root {
-    /* Professional ERP Color Palette */
-    /* Fondo general: #F8FAFC (Off-White) */
-    --background: 210 20% 98%;
-    /* Texto principal: #1F2937 (Charcoal Gray) */
-    --foreground: 212 84% 15%;
+    /* Paleta Odoo Professional */
+    /* Fondo general: #F8F9FA (Light Gray) */
+    --background: 220 9% 97%;
+    /* Texto principal: #212529 (Dark Charcoal) */
+    --foreground: 210 11% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 212 84% 15%;
+    --card-foreground: 210 11% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 212 84% 15%;
+    --popover-foreground: 210 11% 15%;
 
-    /* Primario: #1E293B (Midnight Navy) */
-    --primary: 222 84% 17%;
+    /* Primario: #714B67 (Odoo Purple) */
+    --primary: 315 20% 37%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secundario: #E0F2FE (Glacier Blue) */
-    --secondary: 192 81% 94%;
-    --secondary-foreground: 222 84% 17%;
+    /* Secundario: #875A7B (Soft Lavender) */
+    --secondary: 317 18% 43%;
+    --secondary-foreground: 0 0% 100%;
 
-    /* Acento: #99F6E4 (Mint Wave) */
-    --accent: 162 85% 78%;
-    --accent-foreground: 222 84% 17%;
+    /* Hover/Focus: #9A6D8F (Purple Hover) */
+    --accent: 318 19% 52%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Bordes: #E5E7EB (Cloud Gray) */
-    --muted: 220 14% 92%;
-    --muted-foreground: 215 16% 47%;
+    /* Líneas/Bordes: #DEE2E6 (Medium Gray) */
+    --muted: 210 17% 89%;
+    --muted-foreground: 210 11% 15%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Bordes y divisores: #E5E7EB (Cloud Gray) */
-    --border: 220 14% 92%;
-    --input: 220 14% 92%;
-    --ring: 222 84% 17%;
+    /* Bordes y divisores: #DEE2E6 (Medium Gray) */
+    --border: 210 17% 89%;
+    --input: 210 17% 89%;
+    --ring: 318 19% 52%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Sidebar con el nuevo esquema */
-    --sidebar-background: 222 84% 17%;
+    /* Sidebar con esquema Odoo */
+    --sidebar-background: 315 20% 37%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 162 85% 78%;
-    --sidebar-primary-foreground: 222 84% 17%;
-    --sidebar-accent: 192 81% 94%;
-    --sidebar-accent-foreground: 222 84% 17%;
-    --sidebar-border: 220 14% 92%;
-    --sidebar-ring: 162 85% 78%;
+    --sidebar-primary: 318 19% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 317 18% 43%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 17% 89%;
+    --sidebar-ring: 318 19% 52%;
 
-    /* KPI Cards específicos */
-    --mint-wave: 162 85% 78%;        /* #99F6E4 */
-    --glacier-blue: 192 81% 94%;     /* #E0F2FE */
-    --coral-light: 0 87% 80%;        /* #FCA5A5 */
-    --midnight-navy: 222 84% 17%;    /* #1E293B */
-    --slate-gray: 215 16% 47%;       /* #64748B */
-    --off-white: 210 20% 98%;        /* #F8FAFC */
+    /* Colores específicos Odoo */
+    --odoo-purple: 315 20% 37%;          /* #714B67 */
+    --odoo-lavender: 317 18% 43%;        /* #875A7B */
+    --odoo-hover: 318 19% 52%;           /* #9A6D8F */
+    --odoo-light-gray: 220 9% 97%;       /* #F8F9FA */
+    --odoo-dark-charcoal: 210 11% 15%;   /* #212529 */
+    --odoo-medium-gray: 210 17% 89%;     /* #DEE2E6 */
+    --odoo-white: 0 0% 100%;             /* #FFFFFF */
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    /* Colores pasteles para modo oscuro */
-    --green-50: 120 20% 15%;
-    --green-100: 120 25% 20%;
-    --green-200: 120 30% 25%;
-    --terracotta-50: 15 20% 15%;
-    --terracotta-100: 15 25% 20%;
-    --terracotta-200: 15 30% 25%;
-    --ochre-50: 45 20% 15%;
-    --ochre-100: 45 25% 20%;
-    --ochre-200: 45 30% 25%;
 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
@@ -104,6 +93,7 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -122,5 +112,94 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Componentes personalizados Odoo */
+@layer components {
+  /* Botones con paleta Odoo */
+  .btn-odoo-primary {
+    @apply bg-[hsl(var(--odoo-lavender))] text-white hover:bg-[hsl(var(--odoo-hover))] 
+           transition-all duration-200 ease-in-out shadow-sm hover:shadow-md;
+  }
+  
+  .btn-odoo-secondary {
+    @apply bg-white border border-[hsl(var(--odoo-medium-gray))] text-[hsl(var(--odoo-lavender))] 
+           hover:border-[hsl(var(--odoo-hover))] hover:text-[hsl(var(--odoo-hover))] 
+           transition-all duration-200 ease-in-out;
+  }
+
+  /* Cards con diseño Odoo */
+  .card-odoo {
+    @apply bg-white border border-[hsl(var(--odoo-medium-gray))] rounded-lg shadow-sm 
+           hover:shadow-md transition-all duration-200 ease-in-out;
+  }
+
+  /* Inputs con estilo Odoo */
+  .input-odoo {
+    @apply bg-white border border-[hsl(var(--odoo-medium-gray))] 
+           focus:border-[hsl(var(--odoo-hover))] focus:ring-1 focus:ring-[hsl(var(--odoo-hover))] 
+           transition-all duration-200 ease-in-out;
+  }
+
+  /* Sidebar Odoo */
+  .sidebar-odoo {
+    @apply bg-[hsl(var(--odoo-purple))] text-white;
+  }
+  
+  .sidebar-item-odoo {
+    @apply text-white hover:bg-[hsl(var(--odoo-hover))] 
+           transition-all duration-200 ease-in-out;
+  }
+  
+  .sidebar-item-active-odoo {
+    @apply bg-[hsl(var(--odoo-hover))] border-r-2 border-white;
+  }
+
+  /* Animaciones suaves */
+  .fade-up {
+    @apply animate-[fadeUp_0.3s_ease-out];
+  }
+  
+  .ripple-effect {
+    @apply relative overflow-hidden;
+  }
+  
+  .ripple-effect::before {
+    content: '';
+    @apply absolute inset-0 bg-white opacity-0 transition-opacity duration-200;
+  }
+  
+  .ripple-effect:active::before {
+    @apply opacity-20;
+  }
+
+  /* Responsive typography */
+  .text-responsive-sm {
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+  }
+  
+  .text-responsive-base {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+  }
+  
+  .text-responsive-lg {
+    font-size: clamp(1.25rem, 3vw, 1.875rem);
+  }
+  
+  .text-responsive-xl {
+    font-size: clamp(1.875rem, 4vw, 2.25rem);
+  }
+}
+
+/* Keyframes para animaciones */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

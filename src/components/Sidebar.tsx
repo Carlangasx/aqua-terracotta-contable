@@ -22,7 +22,6 @@ const navigation = [
   { name: 'Productos Elaborados', href: '/productos-elaborados', icon: Wrench },
   { name: 'Cuentas por Cobrar', href: '/cuentas-cobrar', icon: CreditCard },
   { name: 'Cuentas por Pagar', href: '/cuentas-pagar', icon: FileText },
-  
   { name: 'Cuentas Bancarias', href: '/cuentas-bancarias', icon: Building },
   { name: 'Conciliación', href: '/bancos/conciliacion', icon: GitBranch },
   { name: 'Configuración', href: '/configuracion', icon: Settings },
@@ -36,10 +35,15 @@ export function Sidebar() {
   );
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-midnight-navy">
+    <div className="flex h-full flex-col sidebar-odoo">
       <div className="flex h-14 items-center border-b border-white/10 px-4">
-        <Calculator className="h-6 w-6 text-mint-wave mr-2" />
-        <span className="font-semibold text-white">Pliego360</span>
+        <div className="bg-white p-2 rounded-lg mr-3">
+          <Calculator className="h-5 w-5 text-odoo-purple" />
+        </div>
+        <div>
+          <span className="font-semibold text-white text-sm">Pliego360</span>
+          <p className="text-xs text-white/70">ERP Imprentas</p>
+        </div>
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => {
@@ -51,12 +55,12 @@ export function Sidebar() {
                 open={documentosOpen}
                 onOpenChange={setDocumentosOpen}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors text-white hover:bg-white/10 hover:text-white">
+                <CollapsibleTrigger className="sidebar-item-odoo flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md">
                   <div className="flex items-center">
-                    <item.icon className="mr-3 h-5 w-5" />
+                    <item.icon className="mr-3 h-4 w-4" />
                     {item.name}
                   </div>
-                  <span className={`transform transition-transform ${documentosOpen ? 'rotate-180' : ''}`}>
+                  <span className={`transform transition-transform duration-200 ${documentosOpen ? 'rotate-180' : ''}`}>
                     ▼
                   </span>
                 </CollapsibleTrigger>
@@ -69,10 +73,10 @@ export function Sidebar() {
                         to={subItem.href}
                         onClick={() => setOpen(false)}
                         className={`
-                          flex items-center px-6 py-2 text-sm font-medium rounded-md transition-colors ml-6
+                          flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200 ml-6
                           ${isActive 
-                            ? 'bg-mint-wave/20 text-mint-wave border-l-2 border-mint-wave' 
-                            : 'text-white hover:bg-white/10 hover:text-white'
+                            ? 'sidebar-item-active-odoo' 
+                            : 'sidebar-item-odoo'
                           }
                         `}
                       >
@@ -92,14 +96,14 @@ export function Sidebar() {
                 to={item.href}
                 onClick={() => setOpen(false)}
                 className={`
-                  flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
+                  flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200
                   ${isActive 
-                    ? 'bg-mint-wave/20 text-mint-wave border-l-2 border-mint-wave' 
-                    : 'text-white hover:bg-white/10 hover:text-white'
+                    ? 'sidebar-item-active-odoo' 
+                    : 'sidebar-item-odoo'
                   }
                 `}
               >
-                <item.icon className="mr-3 h-5 w-5" />
+                <item.icon className="mr-3 h-4 w-4" />
                 {item.name}
               </Link>
             );
@@ -114,7 +118,7 @@ export function Sidebar() {
       {/* Mobile Sidebar */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+          <Button variant="outline" size="icon" className="md:hidden fixed top-4 left-4 z-50 btn-odoo-secondary">
             <Menu className="h-4 w-4" />
           </Button>
         </SheetTrigger>

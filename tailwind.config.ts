@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -12,17 +13,15 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: '1rem',
 			screens: {
 				'2xl': '1400px'
 			}
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'Satoshi', 'Urbanist', 'sans-serif'],
+				sans: ['Inter', 'system-ui', 'sans-serif'],
 				'inter': ['Inter', 'sans-serif'],
-				'satoshi': ['Satoshi', 'sans-serif'],
-				'urbanist': ['Urbanist', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -68,12 +67,16 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				'mint-wave': 'hsl(var(--mint-wave))',
-				'glacier-blue': 'hsl(var(--glacier-blue))',
-				'coral-light': 'hsl(var(--coral-light))',
-				'midnight-navy': 'hsl(var(--midnight-navy))',
-				'slate-gray': 'hsl(var(--slate-gray))',
-				'off-white': 'hsl(var(--off-white))'
+				// Colores específicos Odoo
+				'odoo': {
+					'purple': 'hsl(var(--odoo-purple))',
+					'lavender': 'hsl(var(--odoo-lavender))',
+					'hover': 'hsl(var(--odoo-hover))',
+					'light-gray': 'hsl(var(--odoo-light-gray))',
+					'dark-charcoal': 'hsl(var(--odoo-dark-charcoal))',
+					'medium-gray': 'hsl(var(--odoo-medium-gray))',
+					'white': 'hsl(var(--odoo-white))'
+				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -106,12 +109,23 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
+				},
+				'fadeUp': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(20px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.3s ease-out'
+				'fade-in': 'fade-in 0.3s ease-out',
+				'fade-up': 'fadeUp 0.3s ease-out'
 			}
 		}
 	},
