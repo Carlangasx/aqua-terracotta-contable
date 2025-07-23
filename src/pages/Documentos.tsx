@@ -142,7 +142,7 @@ export default function Documentos() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-muted/30">
+      <div className="min-h-screen bg-off-white" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="flex items-center space-x-3">
@@ -153,8 +153,8 @@ export default function Documentos() {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-primary">Documentos Generados</h1>
-                <p className="text-muted-foreground">Facturas, notas de entrega, recibos y más</p>
+                <h1 className="text-3xl font-bold text-midnight-navy">Documentos Generados</h1>
+                <p className="text-slate-gray">Facturas, notas de entrega, recibos y más</p>
               </div>
             </div>
             

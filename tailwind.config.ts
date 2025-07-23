@@ -18,6 +18,12 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'Satoshi', 'Urbanist', 'sans-serif'],
+				'inter': ['Inter', 'sans-serif'],
+				'satoshi': ['Satoshi', 'sans-serif'],
+				'urbanist': ['Urbanist', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

@@ -133,7 +133,7 @@ export default function Configuracion() {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-midnight-navy"></div>
         </div>
       </Layout>
     );
@@ -141,13 +141,13 @@ export default function Configuracion() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-muted/30">
+      <div className="min-h-screen bg-off-white" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center space-x-3 mb-6">
-            <Settings className="h-8 w-8 text-primary" />
+            <Settings className="h-8 w-8 text-midnight-navy" />
             <div>
-              <h1 className="text-3xl font-bold text-primary">Configuración de Empresa</h1>
-              <p className="text-muted-foreground">Configure los datos de su empresa para los documentos</p>
+              <h1 className="text-3xl font-bold text-midnight-navy">Configuración de Empresa</h1>
+              <p className="text-slate-gray">Configure los datos de su empresa para los documentos</p>
             </div>
           </div>
 

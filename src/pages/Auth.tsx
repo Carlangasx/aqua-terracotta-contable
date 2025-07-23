@@ -54,17 +54,17 @@ export default function Auth() {
 
   return (
     <Layout>
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-off-white p-4">
+        <Card className="w-full max-w-md shadow-xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Calculator className="h-8 w-8 text-primary" />
+              <div className="bg-mint-wave/20 p-3 rounded-full">
+                <Calculator className="h-8 w-8 text-midnight-navy" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-primary">ContApp</CardTitle>
-            <CardDescription>
-              Gestión contable para tu empresa
+            <CardTitle className="text-2xl font-bold text-midnight-navy">ContaSimple</CardTitle>
+            <CardDescription className="text-slate-gray">
+              Sistema ERP para Imprentas
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -526,14 +526,14 @@ const ProductosElaborados = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 bg-off-white min-h-screen p-6" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
         {viewMode === 'list' ? (
           <>
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Productos Elaborados - SKUs</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-3xl font-bold tracking-tight text-midnight-navy">Productos Elaborados - SKUs</h1>
+                <p className="text-slate-gray">
                   Menú interactivo de productos fabricados bajo pedido
                 </p>
               </div>
@@ -555,7 +555,7 @@ const ProductosElaborados = () => {
                     <form onSubmit={handleSubmit} className="space-y-6">
                       {/* Información General */}
                       <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-primary">Información General</h3>
+                        <h3 className="text-lg font-medium text-midnight-navy">Información General</h3>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="col-span-2">
                             <Label htmlFor="nombre_producto">Nombre del Producto *</Label>

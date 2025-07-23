@@ -21,7 +21,7 @@ const navigation = [
   { name: 'Productos Elaborados', href: '/productos-elaborados', icon: Wrench },
   { name: 'Cuentas por Cobrar', href: '/cuentas-cobrar', icon: CreditCard },
   { name: 'Cuentas por Pagar', href: '/cuentas-pagar', icon: FileText },
-  { name: 'Pagos', href: '/pagos', icon: Banknote },
+  
   { name: 'Cuentas Bancarias', href: '/cuentas-bancarias', icon: Building },
   { name: 'Conciliación', href: '/bancos/conciliacion', icon: GitBranch },
   { name: 'Configuración', href: '/configuracion', icon: Settings },
@@ -35,10 +35,10 @@ export function Sidebar() {
   );
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-sidebar-background">
-      <div className="flex h-14 items-center border-b px-4">
-        <Calculator className="h-6 w-6 text-primary mr-2" />
-        <span className="font-semibold text-sidebar-foreground">ContaSimple</span>
+    <div className="flex h-full flex-col bg-midnight-navy">
+      <div className="flex h-14 items-center border-b border-white/10 px-4">
+        <Calculator className="h-6 w-6 text-mint-wave mr-2" />
+        <span className="font-semibold text-white">ContaSimple</span>
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => {
@@ -50,7 +50,7 @@ export function Sidebar() {
                 open={documentosOpen}
                 onOpenChange={setDocumentosOpen}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground">
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors text-white hover:bg-white/10 hover:text-white">
                   <div className="flex items-center">
                     <item.icon className="mr-3 h-5 w-5" />
                     {item.name}
@@ -70,8 +70,8 @@ export function Sidebar() {
                         className={`
                           flex items-center px-6 py-2 text-sm font-medium rounded-md transition-colors ml-6
                           ${isActive 
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                            ? 'bg-mint-wave/20 text-mint-wave border-l-2 border-mint-wave' 
+                            : 'text-white hover:bg-white/10 hover:text-white'
                           }
                         `}
                       >
@@ -93,8 +93,8 @@ export function Sidebar() {
                 className={`
                   flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
                   ${isActive 
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                    ? 'bg-mint-wave/20 text-mint-wave border-l-2 border-mint-wave' 
+                    : 'text-white hover:bg-white/10 hover:text-white'
                   }
                 `}
               >

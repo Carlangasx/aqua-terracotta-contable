@@ -104,14 +104,14 @@ export default function Clientes() {
 
   return (
     <MainLayout>
-      <div className="p-6">
+      <div className="p-6 bg-off-white min-h-screen" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-primary flex items-center">
+            <h1 className="text-3xl font-bold text-midnight-navy flex items-center">
               <Users className="mr-3" />
               Gestión de Clientes
             </h1>
-            <p className="text-muted-foreground">Administra la información de tus clientes</p>
+            <p className="text-slate-gray">Administra la información de tus clientes</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
