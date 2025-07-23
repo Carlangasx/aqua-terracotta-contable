@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -103,35 +102,29 @@ export default function Clientes() {
     return <Navigate to="/auth" replace />;
   }
 
-  const filteredClientes = clientes.filter(cliente =>
-    cliente.nombre_empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cliente.persona_contacto && cliente.persona_contacto.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
   return (
     <MainLayout>
-      <div className="p-4 sm:p-6 bg-odoo-light-gray min-h-screen" style={{ fontFamily: 'Inter, sans-serif' }}>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="p-6 bg-off-white min-h-screen" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-responsive-xl font-bold text-odoo-purple flex items-center">
+            <h1 className="text-3xl font-bold text-midnight-navy flex items-center">
               <Users className="mr-3" />
               Gestión de Clientes
             </h1>
-            <p className="text-odoo-dark-charcoal/70 text-responsive-sm">Administra la información de tus clientes</p>
+            <p className="text-slate-gray">Administra la información de tus clientes</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="btn-odoo-primary ripple-effect">
+              <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Cliente
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl card-odoo">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle className="text-odoo-purple">Nuevo Cliente</DialogTitle>
-                <DialogDescription className="text-odoo-dark-charcoal/70">
+                <DialogTitle>Nuevo Cliente</DialogTitle>
+                <DialogDescription>
                   Completa la información del nuevo cliente
                 </DialogDescription>
               </DialogHeader>
@@ -139,149 +132,111 @@ export default function Clientes() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="nombre_empresa" className="text-odoo-dark-charcoal font-medium">Nombre de Empresa *</Label>
+                    <Label htmlFor="nombre_empresa">Nombre de Empresa *</Label>
                     <Input 
                       id="nombre_empresa" 
                       name="nombre_empresa" 
                       required 
                       placeholder="Ej: Empresa XYZ C.A."
-                      className="input-odoo"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="rif" className="text-odoo-dark-charcoal font-medium">RIF *</Label>
+                    <Label htmlFor="rif">RIF *</Label>
                     <Input 
                       id="rif" 
                       name="rif" 
                       required 
                       placeholder="J-12345678-9"
-                      className="input-odoo"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="correo" className="text-odoo-dark-charcoal font-medium">Correo</Label>
+                    <Label htmlFor="correo">Correo</Label>
                     <Input 
                       id="correo" 
                       name="correo" 
                       type="email"
                       placeholder="empresa@email.com"
-                      className="input-odoo"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="telefono_empresa" className="text-odoo-dark-charcoal font-medium">Teléfono</Label>
+                    <Label htmlFor="telefono_empresa">Teléfono</Label>
                     <Input 
                       id="telefono_empresa" 
                       name="telefono_empresa" 
                       placeholder="+58 212-123-4567"
-                      className="input-odoo"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="persona_contacto" className="text-odoo-dark-charcoal font-medium">Persona de Contacto</Label>
+                    <Label htmlFor="persona_contacto">Persona de Contacto</Label>
                     <Input 
                       id="persona_contacto" 
                       name="persona_contacto" 
                       placeholder="Juan Pérez"
-                      className="input-odoo"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="telefono_contacto" className="text-odoo-dark-charcoal font-medium">Teléfono Contacto</Label>
+                    <Label htmlFor="telefono_contacto">Teléfono Contacto</Label>
                     <Input 
                       id="telefono_contacto" 
                       name="telefono_contacto" 
                       placeholder="+58 424-123-4567"
-                      className="input-odoo"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <Label htmlFor="direccion_fiscal" className="text-odoo-dark-charcoal font-medium">Dirección Fiscal</Label>
+                  <Label htmlFor="direccion_fiscal">Dirección Fiscal</Label>
                   <Input 
                     id="direccion_fiscal" 
                     name="direccion_fiscal" 
                     placeholder="Dirección completa"
-                    className="input-odoo"
                   />
                 </div>
                 
                 <div className="flex items-center space-x-2">
                   <Checkbox id="contribuyente_especial" name="contribuyente_especial" />
-                  <Label htmlFor="contribuyente_especial" className="text-odoo-dark-charcoal font-medium">Contribuyente Especial</Label>
+                  <Label htmlFor="contribuyente_especial">Contribuyente Especial</Label>
                 </div>
                 
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="btn-odoo-secondary">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button type="submit" className="btn-odoo-primary ripple-effect">Crear Cliente</Button>
+                  <Button type="submit">Crear Cliente</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Search Bar */}
-        <Card className="card-odoo mb-6">
-          <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-odoo-dark-charcoal/50 h-4 w-4" />
-              <Input
-                placeholder="Buscar por empresa, RIF o contacto..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-odoo pl-10"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-odoo fade-up">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-odoo-purple">
-              Clientes ({filteredClientes.length})
-            </CardTitle>
-            <CardDescription className="text-odoo-dark-charcoal/70">
-              Listado completo de clientes registrados
-            </CardDescription>
+            <CardTitle>Clientes ({clientes.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-odoo-purple mx-auto"></div>
-                <p className="text-odoo-dark-charcoal/70 mt-2">Cargando clientes...</p>
-              </div>
+              <div className="text-center py-4">Cargando...</div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-odoo-medium-gray">
-                      <TableHead className="text-odoo-dark-charcoal font-medium">Empresa</TableHead>
-                      <TableHead className="text-odoo-dark-charcoal font-medium">RIF</TableHead>
-                      <TableHead className="text-odoo-dark-charcoal font-medium">Contacto</TableHead>
-                      <TableHead className="text-odoo-dark-charcoal font-medium">Teléfono</TableHead>
-                      <TableHead className="text-odoo-dark-charcoal font-medium">Correo</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>RIF</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>Teléfono</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientes.map((cliente) => (
+                    <TableRow key={cliente.id}>
+                      <TableCell className="font-medium">{cliente.nombre_empresa}</TableCell>
+                      <TableCell>{cliente.rif}</TableCell>
+                      <TableCell>{cliente.persona_contacto || '-'}</TableCell>
+                      <TableCell>{cliente.telefono_contacto || '-'}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClientes.map((cliente, index) => (
-                      <TableRow 
-                        key={cliente.id} 
-                        className="border-odoo-medium-gray hover:bg-odoo-light-gray/50 transition-colors fade-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <TableCell className="font-medium text-odoo-purple">{cliente.nombre_empresa}</TableCell>
-                        <TableCell className="text-odoo-dark-charcoal">{cliente.rif}</TableCell>
-                        <TableCell className="text-odoo-dark-charcoal">{cliente.persona_contacto || '-'}</TableCell>
-                        <TableCell className="text-odoo-dark-charcoal">{cliente.telefono_contacto || '-'}</TableCell>
-                        <TableCell className="text-odoo-dark-charcoal">{cliente.correo || '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

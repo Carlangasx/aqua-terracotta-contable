@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Calculator, Users, ShoppingCart, Package, LogOut, 
   DollarSign, Truck, FileText, BarChart3, Settings, 
-  TrendingUp, Boxes, Menu
+  TrendingUp, Boxes, AlertTriangle, Menu
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -84,24 +83,23 @@ export default function Dashboard() {
       name: 'Clientes',
       icon: Users,
       path: '/clientes',
-      bgColor: 'bg-odoo-white',
-      textColor: 'text-odoo-purple',
-      description: 'Gestionar clientes',
-      hasBorder: true
+      bgColor: 'bg-mint-wave',
+      textColor: 'text-midnight-navy',
+      description: 'Gestionar clientes'
     },
     {
       name: 'Documentos',
       icon: FileText,
       path: '/documentos',
-      bgColor: 'bg-odoo-lavender',
-      textColor: 'text-white',
+      bgColor: 'bg-glacier-blue',
+      textColor: 'text-midnight-navy',
       description: 'Crear y gestionar documentos'
     },
     {
       name: 'Compras',
       icon: ShoppingCart,
       path: '/compras',
-      bgColor: 'bg-odoo-purple',
+      bgColor: 'bg-midnight-navy',
       textColor: 'text-white',
       description: 'Gestionar compras'
     },
@@ -109,8 +107,8 @@ export default function Dashboard() {
       name: 'Inventario',
       icon: Package,
       path: '/inventario',
-      bgColor: 'bg-odoo-white',
-      textColor: 'text-odoo-purple',
+      bgColor: 'bg-off-white',
+      textColor: 'text-midnight-navy',
       description: 'Control de inventario',
       hasBorder: true
     },
@@ -118,16 +116,16 @@ export default function Dashboard() {
       name: 'Reportes',
       icon: BarChart3,
       path: '/reportes',
-      bgColor: 'bg-odoo-hover',
-      textColor: 'text-white',
+      bgColor: 'bg-glacier-blue',
+      textColor: 'text-midnight-navy',
       description: 'Análisis y reportes'
     },
     {
       name: 'Configuración',
       icon: Settings,
       path: '/configuracion',
-      bgColor: 'bg-odoo-white',
-      textColor: 'text-odoo-dark-charcoal',
+      bgColor: 'bg-off-white',
+      textColor: 'text-slate-gray',
       description: 'Configuración del sistema',
       hasBorder: true
     },
@@ -135,8 +133,8 @@ export default function Dashboard() {
       name: 'Productos Elaborados',
       icon: Boxes,
       path: '/productos-elaborados',
-      bgColor: 'bg-odoo-lavender',
-      textColor: 'text-white',
+      bgColor: 'bg-mint-wave',
+      textColor: 'text-midnight-navy',
       description: 'Catálogo de productos'
     },
   ];
@@ -153,21 +151,21 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-odoo-light-gray" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="flex min-h-screen bg-off-white" style={{ fontFamily: 'Inter, Satoshi, Urbanist, sans-serif' }}>
       {/* Sidebar */}
-      <div className={`sidebar-odoo transition-all duration-300 ease-in-out flex flex-col ${
+      <div className={`bg-midnight-navy text-white transition-all duration-300 flex flex-col ${
         sidebarCollapsed ? 'w-16' : 'w-64'
       }`}>
         {/* Logo and Toggle */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           {!sidebarCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="bg-white p-2 rounded-lg">
-                <Calculator className="h-6 w-6 text-odoo-purple" />
+              <div className="bg-mint-wave p-2 rounded-lg">
+                <Calculator className="h-6 w-6 text-midnight-navy" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">Pliego360</h1>
-                <p className="text-xs text-white/80">ERP Imprentas</p>
+                <h1 className="text-lg font-bold">Pliego360</h1>
+                <p className="text-xs text-mint-wave">ERP Imprentas</p>
               </div>
             </div>
           )}
@@ -175,7 +173,7 @@ export default function Dashboard() {
             variant="ghost"
             size="sm"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="text-white hover:bg-odoo-hover hover:text-white transition-all duration-200"
+            className="text-white hover:bg-white/10 hover:text-white"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -189,8 +187,8 @@ export default function Dashboard() {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`sidebar-item-odoo flex items-center px-4 py-3 text-sm group relative ${
-                  item.active ? 'sidebar-item-active-odoo' : ''
+                className={`flex items-center px-4 py-3 text-sm transition-all duration-200 hover:bg-white/10 group relative ${
+                  item.active ? 'bg-mint-wave/20 border-r-2 border-mint-wave' : ''
                 }`}
               >
                 <IconComponent className={`h-5 w-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'}`} />
@@ -198,7 +196,7 @@ export default function Dashboard() {
                 
                 {/* Tooltip for collapsed state */}
                 {sidebarCollapsed && (
-                  <div className="absolute left-16 bg-odoo-purple/95 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 border border-white/20">
+                  <div className="absolute left-16 bg-midnight-navy/90 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 border border-white/20">
                     {item.name}
                   </div>
                 )}
@@ -212,7 +210,7 @@ export default function Dashboard() {
           <Button
             variant="ghost"
             onClick={handleSignOut}
-            className={`w-full text-white hover:bg-odoo-hover hover:text-white transition-all duration-200 ${
+            className={`w-full text-white hover:bg-white/10 hover:text-white ${
               sidebarCollapsed ? 'px-2' : 'justify-start'
             }`}
           >
@@ -225,29 +223,29 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-odoo-medium-gray">
-          <div className="px-4 sm:px-8 py-6">
-            <h1 className="text-responsive-xl font-bold text-odoo-purple">Sistema Administrativo</h1>
-            <p className="text-odoo-dark-charcoal/70 mt-1 text-responsive-sm">Soluciones Gráficas Litoarte, C. A.</p>
+        <div className="bg-white shadow-sm border-b border">
+          <div className="px-8 py-6">
+            <h1 className="text-3xl font-bold text-midnight-navy">Sistema Administrativo</h1>
+            <p className="text-slate-gray mt-1">Soluciones Gráficas Litoarte, C. A.</p>
           </div>
         </div>
 
-        <div className="p-4 sm:p-8 space-y-8">
+        <div className="p-8 space-y-8">
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Ventas del Mes */}
             <Card 
-              className="card-odoo fade-up"
+              className="transition-all duration-300 ease-in-out hover:scale-[1.03] cursor-pointer shadow-lg rounded-2xl border-0 bg-mint-wave animate-fade-in"
               style={{ animationDelay: '0ms' }}
             >
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between text-odoo-purple">
-                  <div className="bg-odoo-purple/10 p-3 rounded-xl">
-                    <DollarSign className="h-6 w-6 sm:h-8 sm:w-8" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between text-midnight-navy">
+                  <div className="bg-midnight-navy/10 p-3 rounded-xl">
+                    <DollarSign className="h-8 w-8" />
                   </div>
                   <div className="text-right">
                     <p className="text-xs sm:text-sm font-semibold opacity-80 mb-1">Ventas del Mes</p>
-                    <p className="text-responsive-lg font-bold truncate">
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       ${stats.ventasDelMes.toLocaleString()}
                     </p>
                   </div>
@@ -257,17 +255,17 @@ export default function Dashboard() {
 
             {/* Inventario Actual */}
             <Card 
-              className="card-odoo fade-up"
+              className="transition-all duration-300 ease-in-out hover:scale-[1.03] cursor-pointer shadow-lg rounded-2xl border-0 bg-glacier-blue animate-fade-in"
               style={{ animationDelay: '100ms' }}
             >
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between text-odoo-lavender">
-                  <div className="bg-odoo-lavender/10 p-3 rounded-xl">
-                    <Package className="h-6 w-6 sm:h-8 sm:w-8" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between text-midnight-navy">
+                  <div className="bg-midnight-navy/10 p-3 rounded-xl">
+                    <Package className="h-8 w-8" />
                   </div>
                   <div className="text-right">
                     <p className="text-xs sm:text-sm font-semibold opacity-80 mb-1">Inventario Actual</p>
-                    <p className="text-responsive-lg font-bold truncate">
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       {stats.inventarioActual}
                     </p>
                   </div>
@@ -277,17 +275,17 @@ export default function Dashboard() {
 
             {/* Gastos del Mes */}
             <Card 
-              className="card-odoo fade-up"
+              className="transition-all duration-300 ease-in-out hover:scale-[1.03] cursor-pointer shadow-lg rounded-2xl border-0 bg-coral-light animate-fade-in"
               style={{ animationDelay: '200ms' }}
             >
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between text-odoo-hover">
-                  <div className="bg-odoo-hover/10 p-3 rounded-xl">
-                    <Truck className="h-6 w-6 sm:h-8 sm:w-8" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between text-white">
+                  <div className="bg-white/20 p-3 rounded-xl">
+                    <Truck className="h-8 w-8" />
                   </div>
                   <div className="text-right">
                     <p className="text-xs sm:text-sm font-semibold opacity-90 mb-1">Gastos del Mes</p>
-                    <p className="text-responsive-lg font-bold truncate">
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       ${stats.gastosDelMes.toLocaleString()}
                     </p>
                   </div>
@@ -297,31 +295,31 @@ export default function Dashboard() {
           </div>
 
           {/* Modules Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {modules.map((module, index) => {
               const IconComponent = module.icon;
               return (
                 <Link 
                   key={module.name} 
                   to={module.path}
-                  className="block fade-up ripple-effect"
+                  className="block animate-fade-in"
                   style={{ animationDelay: `${(index + 3) * 100}ms` }}
                 >
                   <Card 
                     className={`transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl cursor-pointer rounded-xl shadow-md h-32 ${module.bgColor} ${
-                      module.hasBorder ? 'border border-odoo-medium-gray' : 'border-0'
+                      module.hasBorder ? 'border border-muted' : 'border-0'
                     }`}
                   >
-                    <CardContent className="p-4 sm:p-6 flex items-center justify-center h-full">
+                    <CardContent className="p-6 flex items-center justify-center h-full">
                       <div className="text-center space-y-3">
-                        <div className={`${module.textColor === 'text-white' ? 'bg-white/20' : 'bg-odoo-purple/10'} p-3 rounded-lg inline-flex`}>
-                          <IconComponent className={`h-5 w-5 sm:h-6 sm:w-6 ${module.textColor}`} />
+                        <div className={`${module.textColor === 'text-white' ? 'bg-white/20' : 'bg-midnight-navy/10'} p-3 rounded-lg inline-flex`}>
+                          <IconComponent className={`h-6 w-6 ${module.textColor}`} />
                         </div>
                         <div>
                           <h3 className={`font-bold text-sm ${module.textColor}`}>
                             {module.name}
                           </h3>
-                          <p className={`text-xs mt-1 ${module.textColor === 'text-white' ? 'text-white/80' : 'text-odoo-dark-charcoal/70'}`}>
+                          <p className={`text-xs mt-1 ${module.textColor === 'text-white' ? 'text-white/80' : 'text-slate-gray'}`}>
                             {module.description}
                           </p>
                         </div>
