@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Calculator, Users, ShoppingCart, Package, LogOut, 
   DollarSign, Truck, FileText, BarChart3, Settings, 
-  TrendingUp, Boxes, AlertTriangle
+  TrendingUp, Boxes, AlertTriangle, Menu
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -26,6 +26,7 @@ export default function Dashboard() {
     gastosDelMes: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,17 +47,20 @@ export default function Dashboard() {
 
       const ventasDelMes = facturas?.reduce((sum, factura) => sum + (factura.total || 0), 0) || 0;
 
-      // Inventario actual (total de productos en stock)
-      const { count: inventarioCount } = await supabase
+      // Inventario actual (productos con stock > 0)
+      const { data: inventarioData } = await supabase
         .from('inventario_consumibles')
-        .select('*', { count: 'exact', head: true });
+        .select('cantidad_disponible')
+        .gt('cantidad_disponible', 0);
+
+      const inventarioActual = inventarioData?.length || 0;
 
       // Gastos del mes (documentos de compras/gastos - placeholder por ahora)
       const gastosDelMes = 0; // TODO: Implementar cuando exista tabla de compras
 
       setStats({
         ventasDelMes,
-        inventarioActual: inventarioCount || 0,
+        inventarioActual,
         gastosDelMes,
       });
     } catch (error) {
@@ -79,178 +83,236 @@ export default function Dashboard() {
       name: 'Clientes',
       icon: Users,
       path: '/clientes',
-      color: 'bg-green-100 hover:bg-green-200',
-      textColor: 'text-green-700'
-    },
-    {
-      name: 'Ventas',
-      icon: TrendingUp,
-      path: '/ventas',
-      color: 'bg-blue-100 hover:bg-blue-200',
-      textColor: 'text-blue-700'
-    },
-    {
-      name: 'Compras',
-      icon: ShoppingCart,
-      path: '/compras',
-      color: 'bg-yellow-100 hover:bg-yellow-200',
-      textColor: 'text-yellow-700'
-    },
-    {
-      name: 'Inventario',
-      icon: Package,
-      path: '/inventario',
-      color: 'bg-gray-100 hover:bg-gray-200',
-      textColor: 'text-gray-700'
+      color: '#58A0C8',
+      description: 'Gestionar clientes'
     },
     {
       name: 'Documentos',
       icon: FileText,
       path: '/documentos',
-      color: 'bg-purple-100 hover:bg-purple-200',
-      textColor: 'text-purple-700'
+      color: '#34699A',
+      description: 'Crear y gestionar documentos'
+    },
+    {
+      name: 'Compras',
+      icon: ShoppingCart,
+      path: '/compras',
+      color: '#113F67',
+      description: 'Gestionar compras'
+    },
+    {
+      name: 'Inventario',
+      icon: Package,
+      path: '/inventario',
+      color: '#FDF5AA',
+      description: 'Control de inventario',
+      textDark: true
     },
     {
       name: 'Reportes',
       icon: BarChart3,
       path: '/reportes',
-      color: 'bg-orange-100 hover:bg-orange-200',
-      textColor: 'text-orange-700'
+      color: '#34699A',
+      description: 'Análisis y reportes'
     },
     {
       name: 'Configuración',
       icon: Settings,
       path: '/configuracion',
-      color: 'bg-gray-100 hover:bg-gray-200',
-      textColor: 'text-gray-700'
+      color: '#E5E7EB',
+      description: 'Configuración del sistema',
+      textDark: true
     },
     {
       name: 'Productos Elaborados',
       icon: Boxes,
       path: '/productos-elaborados',
-      color: 'bg-indigo-100 hover:bg-indigo-200',
-      textColor: 'text-indigo-700'
+      color: '#58A0C8',
+      description: 'Catálogo de productos'
     },
   ];
 
+  const sidebarItems = [
+    { name: 'Dashboard', icon: TrendingUp, path: '/', active: true },
+    { name: 'Clientes', icon: Users, path: '/clientes' },
+    { name: 'Documentos', icon: FileText, path: '/documentos' },
+    { name: 'Compras', icon: ShoppingCart, path: '/compras' },
+    { name: 'Inventario', icon: Package, path: '/inventario' },
+    { name: 'Reportes', icon: BarChart3, path: '/reportes' },
+    { name: 'Productos Elaborados', icon: Boxes, path: '/productos-elaborados' },
+    { name: 'Configuración', icon: Settings, path: '/configuracion' },
+  ];
+
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-sm">
-          <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-primary to-primary/80 p-3 rounded-2xl shadow-lg">
-                <Calculator className="h-8 w-8 text-white" />
+    <div className="flex min-h-screen bg-[#FDF5AA]" style={{ fontFamily: 'Inter, Satoshi, sans-serif' }}>
+      {/* Sidebar */}
+      <div className={`bg-[#113F67] text-white transition-all duration-300 flex flex-col ${
+        sidebarCollapsed ? 'w-16' : 'w-64'
+      }`}>
+        {/* Logo and Toggle */}
+        <div className="flex items-center justify-between p-4 border-b border-[#34699A]/30">
+          {!sidebarCollapsed && (
+            <div className="flex items-center space-x-3">
+              <div className="bg-[#58A0C8] p-2 rounded-lg">
+                <Calculator className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  ContaSimple
-                </h1>
-                <p className="text-muted-foreground font-medium">
-                  Sistema ERP para Imprentas
-                </p>
+                <h1 className="text-lg font-bold">ContaSimple</h1>
+                <p className="text-xs text-[#58A0C8]">ERP Imprentas</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={handleSignOut}
-              className="bg-white/50 hover:bg-white/80 backdrop-blur-sm border-white/30"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
-            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="text-white hover:bg-[#34699A] hover:text-white"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 py-4">
+          {sidebarItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center px-4 py-3 text-sm transition-colors hover:bg-[#34699A] group relative ${
+                  item.active ? 'bg-[#34699A] border-r-2 border-[#58A0C8]' : ''
+                }`}
+              >
+                <IconComponent className={`h-5 w-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'}`} />
+                {!sidebarCollapsed && <span>{item.name}</span>}
+                
+                {/* Tooltip for collapsed state */}
+                {sidebarCollapsed && (
+                  <div className="absolute left-16 bg-gray-900 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                    {item.name}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User Actions */}
+        <div className="border-t border-[#34699A]/30 p-4">
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            className={`w-full text-white hover:bg-[#34699A] hover:text-white ${
+              sidebarCollapsed ? 'px-2' : 'justify-start'
+            }`}
+          >
+            <LogOut className={`h-5 w-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'}`} />
+            {!sidebarCollapsed && <span>Cerrar Sesión</span>}
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="px-8 py-6">
+            <h1 className="text-3xl font-bold text-[#113F67]">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Resumen general del sistema</p>
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
-          {/* Métricas Principales */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="p-8 space-y-8">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Ventas del Mes */}
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="bg-green-500/10 p-3 rounded-2xl">
-                    <DollarSign className="h-8 w-8 text-green-600" />
+            <Card 
+              className="transition-all duration-300 hover:scale-[1.03] cursor-pointer shadow-md rounded-2xl border-0"
+              style={{ backgroundColor: '#34699A' }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between text-white">
+                  <div className="bg-white/20 p-3 rounded-xl">
+                    <DollarSign className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-green-700 mb-1">Ventas del Mes</p>
-                    <p className="text-3xl font-bold text-green-800">
+                    <p className="text-sm font-medium opacity-90 mb-1">Ventas del Mes</p>
+                    <p className="text-3xl font-bold">
                       ${stats.ventasDelMes.toLocaleString()}
                     </p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-green-600/80">
-                  Total facturado este mes
-                </p>
               </CardContent>
             </Card>
 
-            {/* Inventario Actual */}
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="bg-blue-500/10 p-3 rounded-2xl">
-                    <Package className="h-8 w-8 text-blue-600" />
+            {/* Inventario */}
+            <Card 
+              className="transition-all duration-300 hover:scale-[1.03] cursor-pointer shadow-md rounded-2xl border-0"
+              style={{ backgroundColor: '#58A0C8' }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between text-white">
+                  <div className="bg-white/20 p-3 rounded-xl">
+                    <Package className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-blue-700 mb-1">Inventario Actual</p>
-                    <p className="text-3xl font-bold text-blue-800">
+                    <p className="text-sm font-medium opacity-90 mb-1">Inventario</p>
+                    <p className="text-3xl font-bold">
                       {stats.inventarioActual}
                     </p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-blue-600/80">
-                  Productos en stock
-                </p>
               </CardContent>
             </Card>
 
             {/* Gastos del Mes */}
-            <Card className="bg-gradient-to-br from-pink-50 to-pink-100 border-pink-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="bg-pink-500/10 p-3 rounded-2xl">
-                    <Truck className="h-8 w-8 text-pink-600" />
+            <Card 
+              className="transition-all duration-300 hover:scale-[1.03] cursor-pointer shadow-md rounded-2xl border-0"
+              style={{ backgroundColor: '#113F67' }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between text-white">
+                  <div className="bg-white/20 p-3 rounded-xl">
+                    <Truck className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-pink-700 mb-1">Gastos del Mes</p>
-                    <p className="text-3xl font-bold text-pink-800">
+                    <p className="text-sm font-medium opacity-90 mb-1">Gastos del Mes</p>
+                    <p className="text-3xl font-bold">
                       ${stats.gastosDelMes.toLocaleString()}
                     </p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-pink-600/80">
-                  Compras y gastos
-                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Navegación de Módulos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {modules.map((module) => {
+          {/* Modules Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {modules.map((module, index) => {
               const IconComponent = module.icon;
               return (
-                <Link key={module.name} to={module.path}>
-                  <Card className={`${module.color} border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer backdrop-blur-sm`}>
-                    <CardContent className="p-6 text-center">
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="bg-white/50 p-4 rounded-2xl shadow-sm">
-                          <IconComponent className={`h-8 w-8 ${module.textColor}`} />
+                <Link 
+                  key={module.name} 
+                  to={module.path}
+                  className="block animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <Card 
+                    className="transition-all duration-300 hover:scale-[1.03] hover:shadow-lg cursor-pointer rounded-xl shadow-md border-0 h-32"
+                    style={{ backgroundColor: module.color }}
+                  >
+                    <CardContent className="p-6 flex items-center justify-center h-full">
+                      <div className="text-center space-y-3">
+                        <div className={`${module.textDark ? 'bg-gray-800/10' : 'bg-white/20'} p-3 rounded-lg inline-flex`}>
+                          <IconComponent className={`h-6 w-6 ${module.textDark ? 'text-gray-800' : 'text-white'}`} />
                         </div>
                         <div>
-                          <h3 className={`font-bold text-lg ${module.textColor} mb-1`}>
+                          <h3 className={`font-bold text-sm ${module.textDark ? 'text-gray-800' : 'text-white'}`}>
                             {module.name}
                           </h3>
-                          <p className={`text-sm ${module.textColor}/70`}>
-                            Gestionar {module.name.toLowerCase()}
+                          <p className={`text-xs mt-1 ${module.textDark ? 'text-gray-600' : 'text-white/80'}`}>
+                            {module.description}
                           </p>
                         </div>
                       </div>
@@ -262,6 +324,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 }
