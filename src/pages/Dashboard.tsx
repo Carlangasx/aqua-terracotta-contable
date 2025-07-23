@@ -244,8 +244,8 @@ export default function Dashboard() {
                     <DollarSign className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold opacity-80 mb-1">Ventas del Mes</p>
-                    <p className="text-3xl font-bold">
+                    <p className="text-xs sm:text-sm font-semibold opacity-80 mb-1">Ventas del Mes</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       ${stats.ventasDelMes.toLocaleString()}
                     </p>
                   </div>
@@ -264,8 +264,8 @@ export default function Dashboard() {
                     <Package className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold opacity-80 mb-1">Inventario Actual</p>
-                    <p className="text-3xl font-bold">
+                    <p className="text-xs sm:text-sm font-semibold opacity-80 mb-1">Inventario Actual</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       {stats.inventarioActual}
                     </p>
                   </div>
@@ -284,8 +284,8 @@ export default function Dashboard() {
                     <Truck className="h-8 w-8" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold opacity-90 mb-1">Gastos del Mes</p>
-                    <p className="text-3xl font-bold">
+                    <p className="text-xs sm:text-sm font-semibold opacity-90 mb-1">Gastos del Mes</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       ${stats.gastosDelMes.toLocaleString()}
                     </p>
                   </div>
