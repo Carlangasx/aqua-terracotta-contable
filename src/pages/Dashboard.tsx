@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Calculator, Users, ShoppingCart, Package, LogOut, 
   DollarSign, Truck, FileText, BarChart3, Settings, 
-  TrendingUp, Boxes
+  TrendingUp, Boxes, AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
