@@ -217,56 +217,69 @@ export default function MovimientosInventario() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Movimientos de Inventario</h1>
-            <p className="text-muted-foreground">Registro de entradas y salidas de consumibles</p>
+            <h1 className="text-3xl font-bold text-foreground">Movimientos de Inventario</h1>
+            <p className="text-muted-foreground mt-1">Registro de entradas y salidas de consumibles</p>
           </div>
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="shadow-sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Registrar Movimiento
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Nuevo Movimiento de Inventario</DialogTitle>
               </DialogHeader>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tipo_movimiento">Tipo de Movimiento *</Label>
-                  <Select
-                    value={formData.tipo_movimiento}
-                    onValueChange={(value: 'ENTRADA' | 'SALIDA') => 
-                      setFormData({ ...formData, tipo_movimiento: value, motivo: '' })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ENTRADA">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                          ENTRADA
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="SALIDA">
-                        <div className="flex items-center gap-2">
-                          <TrendingDown className="w-4 h-4 text-red-600" />
-                          SALIDA
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="tipo_movimiento">Tipo de Movimiento *</Label>
+                    <Select
+                      value={formData.tipo_movimiento}
+                      onValueChange={(value: 'ENTRADA' | 'SALIDA') => 
+                        setFormData({ ...formData, tipo_movimiento: value, motivo: '' })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ENTRADA">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-green-600" />
+                            ENTRADA
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="SALIDA">
+                          <div className="flex items-center gap-2">
+                            <TrendingDown className="w-4 h-4 text-red-600" />
+                            SALIDA
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="fecha">Fecha *</Label>
+                    <Input
+                      id="fecha"
+                      type="date"
+                      value={formData.fecha}
+                      onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label htmlFor="producto_id">Producto *</Label>
                   <Select
                     value={formData.producto_id}
@@ -278,8 +291,8 @@ export default function MovimientosInventario() {
                     <SelectContent>
                       {productos.map((producto) => (
                         <SelectItem key={producto.id} value={producto.id}>
-                          <div className="flex flex-col">
-                            <span>{producto.nombre_producto}</span>
+                          <div className="flex flex-col py-1">
+                            <span className="font-medium">{producto.nombre_producto}</span>
                             <span className="text-xs text-muted-foreground">
                               SKU: {producto.sku} | Stock: {producto.cantidad_disponible} {producto.unidad_medida}
                             </span>
@@ -290,8 +303,8 @@ export default function MovimientosInventario() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
                     <Label htmlFor="cantidad">Cantidad *</Label>
                     <Input
                       id="cantidad"
@@ -310,7 +323,7 @@ export default function MovimientosInventario() {
                   </div>
 
                   {formData.tipo_movimiento === 'ENTRADA' && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Label htmlFor="costo_unitario">Costo Unitario</Label>
                       <Input
                         id="costo_unitario"
@@ -325,43 +338,35 @@ export default function MovimientosInventario() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="fecha">Fecha</Label>
-                  <Input
-                    id="fecha"
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="motivo">Motivo</Label>
+                    <Select
+                      value={formData.motivo}
+                      onValueChange={(value) => setFormData({ ...formData, motivo: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar motivo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(formData.tipo_movimiento === 'ENTRADA' ? MOTIVOS_ENTRADA : MOTIVOS_SALIDA).map((motivo) => (
+                          <SelectItem key={motivo} value={motivo}>
+                            {motivo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="motivo">Motivo</Label>
-                  <Select
-                    value={formData.motivo}
-                    onValueChange={(value) => setFormData({ ...formData, motivo: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar motivo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(formData.tipo_movimiento === 'ENTRADA' ? MOTIVOS_ENTRADA : MOTIVOS_SALIDA).map((motivo) => (
-                        <SelectItem key={motivo} value={motivo}>
-                          {motivo}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="referencia_documento">Referencia Documento</Label>
-                  <Input
-                    id="referencia_documento"
-                    value={formData.referencia_documento}
-                    onChange={(e) => setFormData({ ...formData, referencia_documento: e.target.value })}
-                    placeholder="Ej: FACT-001234, OC-005678"
-                  />
+                  <div className="space-y-3">
+                    <Label htmlFor="referencia_documento">Referencia Documento</Label>
+                    <Input
+                      id="referencia_documento"
+                      value={formData.referencia_documento}
+                      onChange={(e) => setFormData({ ...formData, referencia_documento: e.target.value })}
+                      placeholder="Ej: FACT-001234, OC-005678"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-4">
@@ -382,12 +387,12 @@ export default function MovimientosInventario() {
         </div>
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
+        <Card className="shadow-sm border-0 ring-1 ring-border/50">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="search">Buscar</Label>
                 <div className="relative">
@@ -436,33 +441,33 @@ export default function MovimientosInventario() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Acciones</Label>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setSearchTerm('');
-                    setTipoFilter('todos');
-                    setFechaDesde('');
-                    setFechaHasta('');
-                  }}
-                  className="w-full"
-                >
-                  Limpiar
-                </Button>
-              </div>
+            </div>
+            
+            <div className="pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSearchTerm('');
+                  setTipoFilter('todos');
+                  setFechaDesde('');
+                  setFechaHasta('');
+                }}
+                className="w-full sm:w-auto"
+              >
+                Limpiar Filtros
+              </Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Movements Table */}
-        <Card>
-          <CardHeader>
+        <Card className="shadow-sm border-0 ring-1 ring-border/50">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg">
               Historial de Movimientos ({filteredMovimientos.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {loading ? (
               <div className="text-center py-8">
                 <p>Cargando movimientos...</p>
@@ -487,20 +492,20 @@ export default function MovimientosInventario() {
                   </TableHeader>
                   <TableBody>
                     {filteredMovimientos.map((movimiento) => (
-                      <TableRow key={movimiento.id}>
-                        <TableCell>
+                      <TableRow key={movimiento.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="py-4 px-6 font-medium">
                           {format(new Date(movimiento.fecha), 'dd/MM/yyyy')}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4 px-6">
                           <Badge 
                             variant={movimiento.tipo_movimiento === 'ENTRADA' ? 'default' : 'destructive'}
-                            className={
+                            className={`px-3 py-1 ${
                               movimiento.tipo_movimiento === 'ENTRADA' 
                                 ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                                 : 'bg-red-100 text-red-800 hover:bg-red-200'
-                            }
+                            }`}
                           >
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                               {movimiento.tipo_movimiento === 'ENTRADA' ? (
                                 <TrendingUp className="w-3 h-3" />
                               ) : (
@@ -510,22 +515,34 @@ export default function MovimientosInventario() {
                             </div>
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{movimiento.inventario_consumibles.nombre_producto}</p>
+                        <TableCell className="py-4 px-6">
+                          <div className="space-y-1">
+                            <p className="font-medium text-foreground">{movimiento.inventario_consumibles.nombre_producto}</p>
                             <p className="text-xs text-muted-foreground">
                               SKU: {movimiento.inventario_consumibles.sku}
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4 px-6 font-medium">
                           {movimiento.cantidad} {movimiento.inventario_consumibles.unidad_medida}
                         </TableCell>
-                        <TableCell>
-                          {movimiento.costo_unitario ? `$${movimiento.costo_unitario}` : '-'}
+                        <TableCell className="py-4 px-6">
+                          {movimiento.costo_unitario ? (
+                            <span className="font-medium">${movimiento.costo_unitario}</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
-                        <TableCell>{movimiento.motivo || '-'}</TableCell>
-                        <TableCell>{movimiento.referencia_documento || '-'}</TableCell>
+                        <TableCell className="py-4 px-6">
+                          <span className={movimiento.motivo ? 'text-foreground' : 'text-muted-foreground'}>
+                            {movimiento.motivo || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <span className={movimiento.referencia_documento ? 'text-foreground font-mono text-sm' : 'text-muted-foreground'}>
+                            {movimiento.referencia_documento || '-'}
+                          </span>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
