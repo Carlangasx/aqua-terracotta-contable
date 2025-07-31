@@ -627,6 +627,56 @@ export type Database = {
         }
         Relationships: []
       }
+      movimientos_inventario: {
+        Row: {
+          cantidad: number
+          costo_unitario: number | null
+          created_at: string
+          fecha: string
+          id: string
+          motivo: string | null
+          producto_id: string
+          referencia_documento: string | null
+          tipo_movimiento: Database["public"]["Enums"]["tipo_movimiento_inventario"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cantidad: number
+          costo_unitario?: number | null
+          created_at?: string
+          fecha?: string
+          id?: string
+          motivo?: string | null
+          producto_id: string
+          referencia_documento?: string | null
+          tipo_movimiento: Database["public"]["Enums"]["tipo_movimiento_inventario"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cantidad?: number
+          costo_unitario?: number | null
+          created_at?: string
+          fecha?: string
+          id?: string
+          motivo?: string | null
+          producto_id?: string
+          referencia_documento?: string | null
+          tipo_movimiento?: Database["public"]["Enums"]["tipo_movimiento_inventario"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimientos_inventario_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "inventario_consumibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagos: {
         Row: {
           created_at: string
@@ -1015,6 +1065,7 @@ export type Database = {
       estado_venta: "emitida" | "cobrada" | "anulada"
       moneda: "VES" | "USD"
       tipo_cuenta_bancaria: "ahorro" | "corriente"
+      tipo_movimiento_inventario: "ENTRADA" | "SALIDA"
       tipo_pago: "cobranza" | "pago"
       tipo_soporte: "Microcorrugado" | "Sulfatada" | "Kraft" | "Otra"
       unidad_medida: "cm" | "mm"
@@ -1149,6 +1200,7 @@ export const Constants = {
       estado_venta: ["emitida", "cobrada", "anulada"],
       moneda: ["VES", "USD"],
       tipo_cuenta_bancaria: ["ahorro", "corriente"],
+      tipo_movimiento_inventario: ["ENTRADA", "SALIDA"],
       tipo_pago: ["cobranza", "pago"],
       tipo_soporte: ["Microcorrugado", "Sulfatada", "Kraft", "Otra"],
       unidad_medida: ["cm", "mm"],
