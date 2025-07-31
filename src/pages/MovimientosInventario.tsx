@@ -65,7 +65,7 @@ export default function MovimientosInventario() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [tipoFilter, setTipoFilter] = useState<string>('');
+  const [tipoFilter, setTipoFilter] = useState<string>('todos');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
 
@@ -195,7 +195,7 @@ export default function MovimientosInventario() {
       mov.motivo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mov.referencia_documento?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesTipo = tipoFilter === '' || mov.tipo_movimiento === tipoFilter;
+    const matchesTipo = tipoFilter === 'todos' || mov.tipo_movimiento === tipoFilter;
     
     const matchesFecha = (!fechaDesde || mov.fecha >= fechaDesde) && 
                         (!fechaHasta || mov.fecha <= fechaHasta);
@@ -409,7 +409,7 @@ export default function MovimientosInventario() {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="ENTRADA">ENTRADA</SelectItem>
                     <SelectItem value="SALIDA">SALIDA</SelectItem>
                   </SelectContent>
@@ -442,7 +442,7 @@ export default function MovimientosInventario() {
                   variant="outline" 
                   onClick={() => {
                     setSearchTerm('');
-                    setTipoFilter('');
+                    setTipoFilter('todos');
                     setFechaDesde('');
                     setFechaHasta('');
                   }}
