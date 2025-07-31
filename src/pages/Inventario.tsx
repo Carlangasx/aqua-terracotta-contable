@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Package, Plus, Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Search, Edit, Trash2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -279,8 +280,16 @@ export default function Inventario() {
             <p className="text-gray-600 mt-2">Gestiona las existencias de insumos y materiales</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-            <DialogTrigger asChild>
+          <div className="flex gap-2">
+            <Link to="/inventario/movimientos">
+              <Button variant="outline">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Movimientos
+              </Button>
+            </Link>
+            
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+              <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Agregar Producto
@@ -400,7 +409,8 @@ export default function Inventario() {
                 </div>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {/* Filtros */}

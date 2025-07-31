@@ -10,6 +10,7 @@ import Clientes from "./pages/Clientes";
 import Documentos from "./pages/Documentos";
 import DocumentosNuevo from "./pages/DocumentosNuevo";
 import Inventario from "./pages/Inventario";
+import MovimientosInventario from "./pages/MovimientosInventario";
 import ProductosElaborados from "./pages/ProductosElaborados";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import CuentasPorPagar from "./pages/CuentasPorPagar";
@@ -35,6 +36,7 @@ const App = () => (
            <Route path="/documentos/nuevo" element={<DocumentosNuevo />} />
            <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/inventario" element={<Inventario />} />
+            <Route path="/inventario/movimientos" element={<MovimientosInventario />} />
             <Route path="/productos-elaborados" element={<ProductosElaborados />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />
             <Route path="/cuentas-pagar" element={<CuentasPorPagar />} />

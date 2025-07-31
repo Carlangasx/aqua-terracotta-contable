@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings, Plus, List } from 'lucide-react';
+import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings, Plus, List, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -18,7 +18,15 @@ const navigation = [
       { name: 'Nuevo Documento', href: '/documentos/nuevo', icon: Plus },
     ]
   },
-  { name: 'Inventario Consumibles', href: '/inventario', icon: Package },
+  { 
+    name: 'Inventario', 
+    icon: Package, 
+    isSection: true,
+    items: [
+      { name: 'Consumibles', href: '/inventario', icon: Package },
+      { name: 'Movimientos', href: '/inventario/movimientos', icon: TrendingUp },
+    ]
+  },
   { name: 'Productos Elaborados', href: '/productos-elaborados', icon: Wrench },
   { name: 'Cuentas por Cobrar', href: '/cuentas-cobrar', icon: CreditCard },
   { name: 'Cuentas por Pagar', href: '/cuentas-pagar', icon: FileText },
@@ -34,6 +42,9 @@ export function Sidebar() {
   const [documentosOpen, setDocumentosOpen] = useState(
     location.pathname.startsWith('/documentos')
   );
+  const [inventarioOpen, setInventarioOpen] = useState(
+    location.pathname.startsWith('/inventario')
+  );
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-midnight-navy">
@@ -48,15 +59,17 @@ export function Sidebar() {
             return (
               <Collapsible
                 key={item.name}
-                open={documentosOpen}
-                onOpenChange={setDocumentosOpen}
+                open={item.name === 'Generación de Documentos' ? documentosOpen : inventarioOpen}
+                onOpenChange={item.name === 'Generación de Documentos' ? setDocumentosOpen : setInventarioOpen}
               >
                 <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors text-white hover:bg-white/10 hover:text-white">
                   <div className="flex items-center">
                     <item.icon className="mr-3 h-5 w-5" />
                     {item.name}
                   </div>
-                  <span className={`transform transition-transform ${documentosOpen ? 'rotate-180' : ''}`}>
+                  <span className={`transform transition-transform ${
+                    (item.name === 'Generación de Documentos' ? documentosOpen : inventarioOpen) ? 'rotate-180' : ''
+                  }`}>
                     ▼
                   </span>
                 </CollapsibleTrigger>

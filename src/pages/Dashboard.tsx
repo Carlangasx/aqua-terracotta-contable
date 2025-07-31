@@ -16,6 +16,10 @@ interface DashboardStats {
   ventasDelMes: number;
   inventarioActual: number;
   gastosDelMes: number;
+  movimientosHoy: {
+    entradas: number;
+    salidas: number;
+  };
 }
 
 export default function Dashboard() {
@@ -24,6 +28,10 @@ export default function Dashboard() {
     ventasDelMes: 0,
     inventarioActual: 0,
     gastosDelMes: 0,
+    movimientosHoy: {
+      entradas: 0,
+      salidas: 0
+    }
   });
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -58,10 +66,31 @@ export default function Dashboard() {
       // Gastos del mes (documentos de compras/gastos - placeholder por ahora)
       const gastosDelMes = 0; // TODO: Implementar cuando exista tabla de compras
 
+      // Movimientos de inventario de hoy
+      const today = new Date().toISOString().split('T')[0];
+      const { data: movimientosEntradas } = await supabase
+        .from('movimientos_inventario')
+        .select('cantidad')
+        .eq('tipo_movimiento', 'ENTRADA')
+        .eq('fecha', today);
+
+      const { data: movimientosSalidas } = await supabase
+        .from('movimientos_inventario')
+        .select('cantidad')
+        .eq('tipo_movimiento', 'SALIDA')
+        .eq('fecha', today);
+
+      const entradas = movimientosEntradas?.length || 0;
+      const salidas = movimientosSalidas?.length || 0;
+
       setStats({
         ventasDelMes,
         inventarioActual,
         gastosDelMes,
+        movimientosHoy: {
+          entradas,
+          salidas
+        }
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -267,6 +296,9 @@ export default function Dashboard() {
                     <p className="text-xs sm:text-sm font-semibold opacity-80 mb-1">Inventario Actual</p>
                     <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                       {stats.inventarioActual}
+                    </p>
+                    <p className="text-xs opacity-70 mt-1">
+                      Mov. hoy: +{stats.movimientosHoy.entradas} | -{stats.movimientosHoy.salidas}
                     </p>
                   </div>
                 </div>
