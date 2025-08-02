@@ -120,9 +120,9 @@ export default function Cotizaciones() {
       cotizacion.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cotizacion.clientes?.nombre_empresa.toLowerCase().includes(searchTerm.toLowerCase()) || false;
 
-    const matchesCliente = !selectedCliente || cotizacion.cliente_id === selectedCliente;
-    const matchesTipoEmpaque = !selectedTipoEmpaque || cotizacion.tipo_empaque === selectedTipoEmpaque;
-    const matchesIndustria = !selectedIndustria || cotizacion.industria === selectedIndustria;
+    const matchesCliente = selectedCliente === '' || selectedCliente === 'all' || cotizacion.cliente_id === selectedCliente;
+    const matchesTipoEmpaque = selectedTipoEmpaque === '' || selectedTipoEmpaque === 'all' || cotizacion.tipo_empaque === selectedTipoEmpaque;
+    const matchesIndustria = selectedIndustria === '' || selectedIndustria === 'all' || cotizacion.industria === selectedIndustria;
 
     return matchesSearch && matchesCliente && matchesTipoEmpaque && matchesIndustria;
   });
@@ -180,7 +180,7 @@ export default function Cotizaciones() {
                 <SelectValue placeholder="Todos los clientes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los clientes</SelectItem>
+                <SelectItem value="all">Todos los clientes</SelectItem>
                 {clientes.map((cliente) => (
                   <SelectItem key={cliente.id} value={cliente.id}>
                     {cliente.nombre_empresa}
@@ -194,7 +194,7 @@ export default function Cotizaciones() {
                 <SelectValue placeholder="Tipo de empaque" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los tipos</SelectItem>
+                <SelectItem value="all">Todos los tipos</SelectItem>
                 {tiposEmpaque.map((tipo) => (
                   <SelectItem key={tipo.value} value={tipo.value}>
                     {tipo.label}
@@ -208,7 +208,7 @@ export default function Cotizaciones() {
                 <SelectValue placeholder="Industria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas las industrias</SelectItem>
+                <SelectItem value="all">Todas las industrias</SelectItem>
                 {industrias.map((industria) => (
                   <SelectItem key={industria.value} value={industria.value}>
                     {industria.label}
