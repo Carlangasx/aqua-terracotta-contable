@@ -153,7 +153,13 @@ export default function Cotizaciones() {
             <h1 className="text-3xl font-bold text-foreground">Cotizaciones</h1>
             <p className="text-muted-foreground">Gestiona las cotizaciones de productos para tus clientes</p>
           </div>
-          <Button className="shadow-lg">
+          <Button 
+            className="shadow-lg"
+            onClick={() => toast({
+              title: "Funcionalidad en desarrollo",
+              description: "La creación de cotizaciones estará disponible próximamente",
+            })}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nueva Cotización
           </Button>
@@ -318,7 +324,13 @@ export default function Cotizaciones() {
                   ? 'No hay cotizaciones que coincidan con los filtros aplicados.'
                   : 'Comienza creando tu primera cotización.'}
               </CardDescription>
-              <Button className="mt-4">
+              <Button 
+                className="mt-4"
+                onClick={() => toast({
+                  title: "Funcionalidad en desarrollo",
+                  description: "La creación de cotizaciones estará disponible próximamente",
+                })}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Nueva Cotización
               </Button>
