@@ -29,6 +29,7 @@ const navigation = [
     ]
   },
   { name: 'Productos Elaborados', href: '/productos-elaborados', icon: Wrench },
+  { name: 'Cotizaciones', href: '/cotizaciones', icon: FileText },
   { name: 'Cuentas por Cobrar', href: '/cuentas-cobrar', icon: CreditCard },
   { name: 'Cuentas por Pagar', href: '/cuentas-pagar', icon: FileText },
   

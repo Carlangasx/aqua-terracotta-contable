@@ -13,6 +13,7 @@ import Inventario from "./pages/Inventario";
 import MovimientosInventario from "./pages/MovimientosInventario";
 import ImportarInventario from "./pages/ImportarInventario";
 import ProductosElaborados from "./pages/ProductosElaborados";
+import Cotizaciones from "./pages/Cotizaciones";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import CuentasPorPagar from "./pages/CuentasPorPagar";
 import ConciliacionBancaria from "./pages/ConciliacionBancaria";
@@ -39,7 +40,8 @@ const App = () => (
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/inventario/movimientos" element={<MovimientosInventario />} />
             <Route path="/inventario/importar" element={<ImportarInventario />} />
-            <Route path="/productos-elaborados" element={<ProductosElaborados />} />
+          <Route path="/productos-elaborados" element={<ProductosElaborados />} />
+          <Route path="/cotizaciones" element={<Cotizaciones />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />
             <Route path="/cuentas-pagar" element={<CuentasPorPagar />} />
             <Route path="/cuentas-bancarias" element={<CuentasBancarias />} />

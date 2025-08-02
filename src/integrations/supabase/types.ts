@@ -270,6 +270,74 @@ export type Database = {
         }
         Relationships: []
       }
+      cotizaciones: {
+        Row: {
+          cantidad_cotizada: number
+          cliente_id: string | null
+          created_at: string
+          descripcion_montaje: string | null
+          documento_pdf: string | null
+          fecha_cotizacion: string
+          id: string
+          industria: string | null
+          medidas_caja_mm: Json
+          nombre_producto: string
+          observaciones: string | null
+          precio_unitario: number
+          sku: string
+          tipo_empaque: string | null
+          troquel_id: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cantidad_cotizada?: number
+          cliente_id?: string | null
+          created_at?: string
+          descripcion_montaje?: string | null
+          documento_pdf?: string | null
+          fecha_cotizacion?: string
+          id?: string
+          industria?: string | null
+          medidas_caja_mm?: Json
+          nombre_producto: string
+          observaciones?: string | null
+          precio_unitario?: number
+          sku: string
+          tipo_empaque?: string | null
+          troquel_id?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cantidad_cotizada?: number
+          cliente_id?: string | null
+          created_at?: string
+          descripcion_montaje?: string | null
+          documento_pdf?: string | null
+          fecha_cotizacion?: string
+          id?: string
+          industria?: string | null
+          medidas_caja_mm?: Json
+          nombre_producto?: string
+          observaciones?: string | null
+          precio_unitario?: number
+          sku?: string
+          tipo_empaque?: string | null
+          troquel_id?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotizaciones_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cuentas_bancarias: {
         Row: {
           activa: boolean
