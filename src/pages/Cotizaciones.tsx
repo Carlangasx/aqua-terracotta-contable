@@ -155,10 +155,7 @@ export default function Cotizaciones() {
           </div>
           <Button 
             className="shadow-lg"
-            onClick={() => toast({
-              title: "Funcionalidad en desarrollo",
-              description: "La creación de cotizaciones estará disponible próximamente",
-            })}
+            onClick={() => navigate('/cotizaciones/nueva')}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nueva Cotización
@@ -326,10 +323,7 @@ export default function Cotizaciones() {
               </CardDescription>
               <Button 
                 className="mt-4"
-                onClick={() => toast({
-                  title: "Funcionalidad en desarrollo",
-                  description: "La creación de cotizaciones estará disponible próximamente",
-                })}
+                onClick={() => navigate('/cotizaciones/nueva')}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nueva Cotización
