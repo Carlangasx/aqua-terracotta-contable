@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,6 +52,7 @@ const industrias = [
 ];
 
 export default function Cotizaciones() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -223,7 +225,11 @@ export default function Cotizaciones() {
       {/* Lista de Cotizaciones */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCotizaciones.map((cotizacion) => (
-          <Card key={cotizacion.id} className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-primary">
+          <Card 
+            key={cotizacion.id} 
+            className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-primary"
+            onClick={() => navigate(`/cotizaciones/${cotizacion.id}`)}
+          >
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
