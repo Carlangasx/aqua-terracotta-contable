@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Package, Plus, Search, Edit, Trash2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Package, Plus, Search, Edit, Trash2, AlertTriangle, TrendingUp, TrendingDown, Download, Upload, FileSpreadsheet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import * as XLSX from 'xlsx';
 
 const CATEGORIAS_IMPRENTA = [
   'Tinta',
@@ -58,6 +59,43 @@ export default function Inventario() {
     unidad_medida: '',
     descripcion: ''
   });
+
+  const descargarPlantilla = () => {
+    const plantillaData = [
+      {
+        nombre_producto: 'Tinta Negra CMYK',
+        sku: 'TINTA-001',
+        categoria: 'tinta',
+        cantidad: 100,
+        unidad_medida: 'l',
+        precio_unitario_usd: 25.50,
+        stock_minimo: 10,
+        proveedor: 'Proveedor Ejemplo',
+        descripcion: 'Tinta para impresión offset'
+      },
+      {
+        nombre_producto: 'Plancha Offset',
+        sku: 'PLAN-001', 
+        categoria: 'plancha',
+        cantidad: 50,
+        unidad_medida: 'und',
+        precio_unitario_usd: 15.00,
+        stock_minimo: 5,
+        proveedor: 'Proveedor Ejemplo',
+        descripcion: 'Plancha de aluminio para offset'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(plantillaData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+    XLSX.writeFile(wb, 'plantilla_inventario.xlsx');
+    
+    toast({
+      title: "Plantilla descargada",
+      description: "Se ha descargado la plantilla de ejemplo"
+    });
+  };
 
   useEffect(() => {
     if (user) {
@@ -281,6 +319,22 @@ export default function Inventario() {
           </div>
           
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={descargarPlantilla}
+              className="bg-[#875A7B] hover:bg-[#6d4862] text-white border-[#875A7B]"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Descargar Plantilla
+            </Button>
+            
+            <Link to="/inventario/importar">
+              <Button variant="outline" className="bg-[#875A7B] hover:bg-[#6d4862] text-white border-[#875A7B]">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Button>
+            </Link>
+            
             <Link to="/inventario/movimientos">
               <Button variant="outline">
                 <TrendingUp className="mr-2 h-4 w-4" />

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings, Plus, List, TrendingUp } from 'lucide-react';
+import { Calculator, Users, ShoppingCart, Package, CreditCard, Banknote, Building, FileText, Menu, X, GitBranch, Wrench, Settings, Plus, List, TrendingUp, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -24,6 +24,7 @@ const navigation = [
     isSection: true,
     items: [
       { name: 'Consumibles', href: '/inventario', icon: Package },
+      { name: 'Importar', href: '/inventario/importar', icon: Upload },
       { name: 'Movimientos', href: '/inventario/movimientos', icon: TrendingUp },
     ]
   },

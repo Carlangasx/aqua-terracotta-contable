@@ -627,6 +627,51 @@ export type Database = {
         }
         Relationships: []
       }
+      log_cargas_inventario: {
+        Row: {
+          created_at: string
+          detalle_errores: Json | null
+          fecha: string
+          filas_actualizadas: number
+          filas_con_error: number
+          filas_insertadas: number
+          id: string
+          nombre_archivo: string
+          tamaño_archivo: number | null
+          total_filas: number
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          detalle_errores?: Json | null
+          fecha?: string
+          filas_actualizadas?: number
+          filas_con_error?: number
+          filas_insertadas?: number
+          id?: string
+          nombre_archivo: string
+          tamaño_archivo?: number | null
+          total_filas?: number
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          detalle_errores?: Json | null
+          fecha?: string
+          filas_actualizadas?: number
+          filas_con_error?: number
+          filas_insertadas?: number
+          id?: string
+          nombre_archivo?: string
+          tamaño_archivo?: number | null
+          total_filas?: number
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       movimientos_inventario: {
         Row: {
           cantidad: number
