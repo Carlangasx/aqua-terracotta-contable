@@ -126,9 +126,9 @@ export default function NuevaCotizacion() {
         user_id: user.id,
         sku: formData.sku,
         nombre_producto: formData.nombre_producto,
-        cliente_id: formData.cliente_id || null,
-        tipo_empaque: formData.tipo_empaque || null,
-        industria: formData.industria || null,
+        cliente_id: formData.cliente_id === 'none' ? null : formData.cliente_id || null,
+        tipo_empaque: formData.tipo_empaque === 'none' ? null : formData.tipo_empaque || null,
+        industria: formData.industria === 'none' ? null : formData.industria || null,
         descripcion_montaje: formData.descripcion_montaje || null,
         cantidad_cotizada: parseInt(formData.cantidad_cotizada),
         precio_unitario: parseFloat(formData.precio_unitario),
@@ -243,7 +243,7 @@ export default function NuevaCotizacion() {
                       <SelectValue placeholder="Selecciona un cliente" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin cliente específico</SelectItem>
+                      <SelectItem value="none">Sin cliente específico</SelectItem>
                       {clientes.map((cliente) => (
                         <SelectItem key={cliente.id} value={cliente.id}>
                           {cliente.nombre_empresa}
@@ -260,7 +260,7 @@ export default function NuevaCotizacion() {
                       <SelectValue placeholder="Selecciona el tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin especificar</SelectItem>
+                      <SelectItem value="none">Sin especificar</SelectItem>
                       {tiposEmpaque.map((tipo) => (
                         <SelectItem key={tipo.value} value={tipo.value}>
                           {tipo.label}
@@ -277,7 +277,7 @@ export default function NuevaCotizacion() {
                       <SelectValue placeholder="Selecciona la industria" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin especificar</SelectItem>
+                      <SelectItem value="none">Sin especificar</SelectItem>
                       {industrias.map((industria) => (
                         <SelectItem key={industria.value} value={industria.value}>
                           {industria.label}
