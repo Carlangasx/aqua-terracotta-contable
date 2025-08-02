@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { MainLayout } from '@/components/MainLayout';
 
 interface Cotizacion {
   id: string;
@@ -145,184 +146,186 @@ export default function Cotizaciones() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Cotizaciones</h1>
-          <p className="text-muted-foreground">Gestiona las cotizaciones de productos para tus clientes</p>
-        </div>
-        <Button className="shadow-lg">
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Cotización
-        </Button>
-      </div>
-
-      {/* Filtros */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por producto, SKU o cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            <Select value={selectedCliente} onValueChange={setSelectedCliente}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos los clientes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los clientes</SelectItem>
-                {clientes.map((cliente) => (
-                  <SelectItem key={cliente.id} value={cliente.id}>
-                    {cliente.nombre_empresa}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedTipoEmpaque} onValueChange={setSelectedTipoEmpaque}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de empaque" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                {tiposEmpaque.map((tipo) => (
-                  <SelectItem key={tipo.value} value={tipo.value}>
-                    {tipo.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedIndustria} onValueChange={setSelectedIndustria}>
-              <SelectTrigger>
-                <SelectValue placeholder="Industria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las industrias</SelectItem>
-                {industrias.map((industria) => (
-                  <SelectItem key={industria.value} value={industria.value}>
-                    {industria.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <MainLayout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Cotizaciones</h1>
+            <p className="text-muted-foreground">Gestiona las cotizaciones de productos para tus clientes</p>
           </div>
-        </CardContent>
-      </Card>
+          <Button className="shadow-lg">
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Cotización
+          </Button>
+        </div>
 
-      {/* Lista de Cotizaciones */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCotizaciones.map((cotizacion) => (
-          <Card 
-            key={cotizacion.id} 
-            className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-primary"
-            onClick={() => navigate(`/cotizaciones/${cotizacion.id}`)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold text-foreground mb-1">
-                    {cotizacion.nombre_producto}
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    SKU: {cotizacion.sku}
-                  </CardDescription>
-                </div>
-                {cotizacion.documento_pdf && (
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Cliente:</span>
-                <span className="text-sm font-semibold text-foreground">
-                  {cotizacion.clientes?.nombre_empresa}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Precio unitario:</span>
-                <span className="text-sm font-bold text-primary">
-                  {formatPrice(cotizacion.precio_unitario)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Cantidad:</span>
-                <span className="text-sm text-foreground">
-                  {cotizacion.cantidad_cotizada.toLocaleString()} und
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Medidas:</span>
-                <span className="text-sm text-foreground flex items-center gap-1">
-                  <Ruler className="h-3 w-3" />
-                  {cotizacion.medidas_caja_mm.ancho_mm} × {cotizacion.medidas_caja_mm.alto_mm} × {cotizacion.medidas_caja_mm.profundidad_mm} mm
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                {cotizacion.tipo_empaque && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Package className="h-3 w-3 mr-1" />
-                    {tiposEmpaque.find(t => t.value === cotizacion.tipo_empaque)?.label}
-                  </Badge>
-                )}
-                {cotizacion.industria && (
-                  <Badge variant="outline" className="text-xs">
-                    {industrias.find(i => i.value === cotizacion.industria)?.label}
-                  </Badge>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t">
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {format(new Date(cotizacion.fecha_cotizacion), 'dd/MM/yyyy', { locale: es })}
-                </span>
-                {cotizacion.troquel_id && (
-                  <span className="text-xs text-muted-foreground">
-                    Troquel #{cotizacion.troquel_id}
-                  </span>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredCotizaciones.length === 0 && (
-        <Card className="text-center py-12">
+        {/* Filtros */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
+          </CardHeader>
           <CardContent>
-            <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <CardTitle className="text-xl mb-2">No se encontraron cotizaciones</CardTitle>
-            <CardDescription>
-              {searchTerm || selectedCliente || selectedTipoEmpaque || selectedIndustria
-                ? 'No hay cotizaciones que coincidan con los filtros aplicados.'
-                : 'Comienza creando tu primera cotización.'}
-            </CardDescription>
-            <Button className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Cotización
-            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por producto, SKU o cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={selectedCliente} onValueChange={setSelectedCliente}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los clientes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los clientes</SelectItem>
+                  {clientes.map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id}>
+                      {cliente.nombre_empresa}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedTipoEmpaque} onValueChange={setSelectedTipoEmpaque}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo de empaque" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  {tiposEmpaque.map((tipo) => (
+                    <SelectItem key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedIndustria} onValueChange={setSelectedIndustria}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Industria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las industrias</SelectItem>
+                  {industrias.map((industria) => (
+                    <SelectItem key={industria.value} value={industria.value}>
+                      {industria.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
-      )}
-    </div>
+
+        {/* Lista de Cotizaciones */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCotizaciones.map((cotizacion) => (
+            <Card 
+              key={cotizacion.id} 
+              className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-primary"
+              onClick={() => navigate(`/cotizaciones/${cotizacion.id}`)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg font-semibold text-foreground mb-1">
+                      {cotizacion.nombre_producto}
+                    </CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      SKU: {cotizacion.sku}
+                    </CardDescription>
+                  </div>
+                  {cotizacion.documento_pdf && (
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Cliente:</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {cotizacion.clientes?.nombre_empresa}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Precio unitario:</span>
+                  <span className="text-sm font-bold text-primary">
+                    {formatPrice(cotizacion.precio_unitario)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Cantidad:</span>
+                  <span className="text-sm text-foreground">
+                    {cotizacion.cantidad_cotizada.toLocaleString()} und
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Medidas:</span>
+                  <span className="text-sm text-foreground flex items-center gap-1">
+                    <Ruler className="h-3 w-3" />
+                    {cotizacion.medidas_caja_mm.ancho_mm} × {cotizacion.medidas_caja_mm.alto_mm} × {cotizacion.medidas_caja_mm.profundidad_mm} mm
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {cotizacion.tipo_empaque && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Package className="h-3 w-3 mr-1" />
+                      {tiposEmpaque.find(t => t.value === cotizacion.tipo_empaque)?.label}
+                    </Badge>
+                  )}
+                  {cotizacion.industria && (
+                    <Badge variant="outline" className="text-xs">
+                      {industrias.find(i => i.value === cotizacion.industria)?.label}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {format(new Date(cotizacion.fecha_cotizacion), 'dd/MM/yyyy', { locale: es })}
+                  </span>
+                  {cotizacion.troquel_id && (
+                    <span className="text-xs text-muted-foreground">
+                      Troquel #{cotizacion.troquel_id}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {filteredCotizaciones.length === 0 && (
+          <Card className="text-center py-12">
+            <CardContent>
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <CardTitle className="text-xl mb-2">No se encontraron cotizaciones</CardTitle>
+              <CardDescription>
+                {searchTerm || selectedCliente || selectedTipoEmpaque || selectedIndustria
+                  ? 'No hay cotizaciones que coincidan con los filtros aplicados.'
+                  : 'Comienza creando tu primera cotización.'}
+              </CardDescription>
+              <Button className="mt-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Cotización
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </MainLayout>
   );
 }
