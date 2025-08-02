@@ -309,7 +309,7 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
     // Registrar log de importación
     try {
       await supabase
-        .from('log_cargas_cotizaciones')
+        .from('log_cargas_inventario')
         .insert({
           usuario_id: user.id,
           nombre_archivo: file?.name || 'archivo_desconocido',

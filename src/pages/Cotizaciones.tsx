@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MainLayout } from '@/components/MainLayout';
+import ImportarCotizaciones from '@/components/ImportarCotizaciones';
 
 interface Cotizacion {
   id: string;
@@ -153,13 +154,16 @@ export default function Cotizaciones() {
             <h1 className="text-3xl font-bold text-foreground">Cotizaciones</h1>
             <p className="text-muted-foreground">Gestiona las cotizaciones de productos para tus clientes</p>
           </div>
-          <Button 
-            className="shadow-lg"
-            onClick={() => navigate('/cotizaciones/nueva')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Cotización
-          </Button>
+          <div className="flex gap-2">
+            <ImportarCotizaciones onImportComplete={fetchCotizaciones} />
+            <Button 
+              className="shadow-lg"
+              onClick={() => navigate('/cotizaciones/nueva')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Cotización
+            </Button>
+          </div>
         </div>
 
         {/* Filtros */}
