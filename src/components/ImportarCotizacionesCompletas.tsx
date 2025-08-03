@@ -282,11 +282,11 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
             cantidad_cotizada: cotizacion.cantidad_cotizada,
             precio_unitario: cotizacion.precio_unitario,
             fecha_cotizacion: cotizacion.fecha,
+            corte: cotizacion.corte,
+            tamaños_por_corte: cotizacion.tamaños_por_corte,
+            tamaños_por_pliego: cotizacion.tamaños_por_pliego,
             observaciones: [
               cotizacion.nota,
-              `Corte: ${cotizacion.corte}`,
-              `Tamaños por corte: ${cotizacion.tamaños_por_corte}`,
-              `Tamaños por pliego: ${cotizacion.tamaños_por_pliego}`,
               cotizacion.tamaño_especial ? `Tamaño especial: ${cotizacion.tamaño_especial}` : ''
             ].filter(Boolean).join(' | '),
             tipo_empaque: cotizacion.tipo_empaque.toLowerCase(),
