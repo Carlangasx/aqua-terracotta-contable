@@ -35,6 +35,8 @@ export default function Clientes() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+  const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -76,26 +78,80 @@ export default function Clientes() {
         telefono_contacto: formData.get('telefono_contacto') as string,
       };
 
+      if (editingCliente) {
+        // Actualizar cliente existente
+        const { error } = await supabase
+          .from('clientes')
+          .update(clienteData)
+          .eq('id', editingCliente.id);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Éxito",
+          description: "Cliente actualizado correctamente",
+        });
+      } else {
+        // Crear nuevo cliente
+        const { error } = await supabase
+          .from('clientes')
+          .insert([clienteData]);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Éxito",
+          description: "Cliente creado correctamente",
+        });
+      }
+      
+      setIsDialogOpen(false);
+      setEditingCliente(null);
+      loadClientes();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al procesar el cliente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = (cliente: Cliente) => {
+    setEditingCliente(cliente);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!clienteToDelete) return;
+    
+    try {
       const { error } = await supabase
         .from('clientes')
-        .insert([clienteData]);
+        .delete()
+        .eq('id', clienteToDelete.id);
       
       if (error) throw error;
       
       toast({
         title: "Éxito",
-        description: "Cliente creado correctamente",
+        description: "Cliente eliminado correctamente",
       });
       
-      setIsDialogOpen(false);
+      setClienteToDelete(null);
       loadClientes();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Error al crear el cliente",
+        description: error.message || "Error al eliminar el cliente",
         variant: "destructive",
       });
     }
+  };
+
+  const resetForm = () => {
+    setEditingCliente(null);
+    setIsDialogOpen(false);
   };
 
   if (!user) {
@@ -114,7 +170,10 @@ export default function Clientes() {
             <p className="text-slate-gray">Administra la información de tus clientes</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            if (!open) resetForm();
+            setIsDialogOpen(open);
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -123,9 +182,9 @@ export default function Clientes() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Nuevo Cliente</DialogTitle>
+                <DialogTitle>{editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}</DialogTitle>
                 <DialogDescription>
-                  Completa la información del nuevo cliente
+                  {editingCliente ? 'Modifica la información del cliente' : 'Completa la información del nuevo cliente'}
                 </DialogDescription>
               </DialogHeader>
               
@@ -138,6 +197,7 @@ export default function Clientes() {
                       name="nombre_empresa" 
                       required 
                       placeholder="Ej: Empresa XYZ C.A."
+                      defaultValue={editingCliente?.nombre_empresa || ''}
                     />
                   </div>
                   <div>
@@ -147,6 +207,7 @@ export default function Clientes() {
                       name="rif" 
                       required 
                       placeholder="J-12345678-9"
+                      defaultValue={editingCliente?.rif || ''}
                     />
                   </div>
                   <div>
@@ -156,6 +217,7 @@ export default function Clientes() {
                       name="correo" 
                       type="email"
                       placeholder="empresa@email.com"
+                      defaultValue={editingCliente?.correo || ''}
                     />
                   </div>
                   <div>
@@ -164,6 +226,7 @@ export default function Clientes() {
                       id="telefono_empresa" 
                       name="telefono_empresa" 
                       placeholder="+58 212-123-4567"
+                      defaultValue={editingCliente?.telefono_empresa || ''}
                     />
                   </div>
                   <div>
@@ -172,6 +235,7 @@ export default function Clientes() {
                       id="persona_contacto" 
                       name="persona_contacto" 
                       placeholder="Juan Pérez"
+                      defaultValue={editingCliente?.persona_contacto || ''}
                     />
                   </div>
                   <div>
@@ -180,6 +244,7 @@ export default function Clientes() {
                       id="telefono_contacto" 
                       name="telefono_contacto" 
                       placeholder="+58 424-123-4567"
+                      defaultValue={editingCliente?.telefono_contacto || ''}
                     />
                   </div>
                 </div>
@@ -190,23 +255,41 @@ export default function Clientes() {
                     id="direccion_fiscal" 
                     name="direccion_fiscal" 
                     placeholder="Dirección completa"
+                    defaultValue={editingCliente?.direccion_fiscal || ''}
                   />
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="contribuyente_especial" name="contribuyente_especial" />
+                  <Checkbox 
+                    id="contribuyente_especial" 
+                    name="contribuyente_especial"
+                    defaultChecked={editingCliente?.contribuyente_especial || false}
+                  />
                   <Label htmlFor="contribuyente_especial">Contribuyente Especial</Label>
                 </div>
                 
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={resetForm}>
                     Cancelar
                   </Button>
-                  <Button type="submit">Crear Cliente</Button>
+                  <Button type="submit">{editingCliente ? 'Actualizar' : 'Crear'} Cliente</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Barra de búsqueda */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-gray h-4 w-4" />
+            <Input
+              placeholder="Buscar por nombre, RIF o contacto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
         <Card>
@@ -224,15 +307,40 @@ export default function Clientes() {
                     <TableHead>RIF</TableHead>
                     <TableHead>Contacto</TableHead>
                     <TableHead>Teléfono</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clientes.map((cliente) => (
+                  {clientes
+                    .filter(cliente => 
+                      cliente.nombre_empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      cliente.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      (cliente.persona_contacto && cliente.persona_contacto.toLowerCase().includes(searchTerm.toLowerCase()))
+                    )
+                    .map((cliente) => (
                     <TableRow key={cliente.id}>
                       <TableCell className="font-medium">{cliente.nombre_empresa}</TableCell>
                       <TableCell>{cliente.rif}</TableCell>
                       <TableCell>{cliente.persona_contacto || '-'}</TableCell>
                       <TableCell>{cliente.telefono_contacto || '-'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(cliente)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setClienteToDelete(cliente)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -240,6 +348,27 @@ export default function Clientes() {
             )}
           </CardContent>
         </Card>
+
+        {/* Dialog de confirmación para eliminar */}
+        <Dialog open={!!clienteToDelete} onOpenChange={() => setClienteToDelete(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar eliminación</DialogTitle>
+              <DialogDescription>
+                ¿Estás seguro de que quieres eliminar el cliente "{clienteToDelete?.nombre_empresa}"? 
+                Esta acción no se puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setClienteToDelete(null)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Eliminar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
