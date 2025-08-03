@@ -374,7 +374,11 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
       toast.success(`${importedCount} cotizaciones importadas exitosamente`);
     }
 
-    onImportComplete();
+    // Agregar delay para asegurar sincronización con la base de datos
+    setTimeout(() => {
+      onImportComplete();
+      setDialogOpen(false);
+    }, 500);
   };
 
   const resetImport = () => {

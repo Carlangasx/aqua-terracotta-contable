@@ -74,6 +74,7 @@ export default function Cotizaciones() {
 
   const fetchCotizaciones = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('cotizaciones')
         .select(`
@@ -84,7 +85,7 @@ export default function Cotizaciones() {
           )
         `)
         .eq('user_id', user?.id)
-        .order('fecha_cotizacion', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setCotizaciones((data || []).map(item => ({
@@ -259,8 +260,8 @@ export default function Cotizaciones() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">Cliente:</span>
                   <span className="text-sm font-semibold text-foreground">
-                    {cotizacion.clientes?.nombre_empresa}
-                  </span>
+                     {cotizacion.clientes?.nombre_empresa || 'Sin cliente asignado'}
+                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
