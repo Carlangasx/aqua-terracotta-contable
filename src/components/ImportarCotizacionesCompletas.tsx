@@ -223,6 +223,11 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
       let importedCount = 0;
       let errorCount = 0;
       const clientesCache = new Map(); // Cache para evitar duplicados
+      const clientesCreados: string[] = []; // Para detectar clientes nuevos
+      
+      // Detectar si todas las cotizaciones son del mismo cliente
+      const clientesUnicos = [...new Set(previewData.map(c => c.cliente))];
+      const esClienteUnico = clientesUnicos.length === 1;
 
       for (const cotizacion of previewData) {
         try {
@@ -261,6 +266,11 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
               }
               clienteId = nuevoCliente.id;
               console.log(`Cliente creado: ${clienteId}`);
+              
+              // Agregar a la lista de clientes creados
+              if (!clientesCreados.includes(cotizacion.cliente)) {
+                clientesCreados.push(cotizacion.cliente);
+              }
             }
             
             // Guardar en cache
@@ -324,12 +334,23 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
           total_filas: previewData.length,
           filas_insertadas: importedCount,
           filas_con_error: errorCount,
-          tamaño_archivo: file?.size || 0
+         tamaño_archivo: file?.size || 0
         });
+
+      // Mensaje especial si se creó un cliente único
+      let descripcionMensaje = `${importedCount} cotizaciones importadas exitosamente.`;
+      if (errorCount > 0) {
+        descripcionMensaje += ` ${errorCount} errores.`;
+      }
+      if (esClienteUnico && clientesCreados.length > 0) {
+        descripcionMensaje += ` Se creó el cliente "${clientesCreados[0]}" - completar datos del cliente recién añadido.`;
+      } else if (clientesCreados.length > 0) {
+        descripcionMensaje += ` Se crearon ${clientesCreados.length} clientes nuevos - completar datos de los clientes recién añadidos.`;
+      }
 
       toast({
         title: "Importación completada",
-        description: `${importedCount} cotizaciones importadas exitosamente. ${errorCount > 0 ? `${errorCount} errores.` : ''}`,
+        description: descripcionMensaje,
       });
 
       // Delay para sincronización
