@@ -30,6 +30,9 @@ interface Cotizacion {
   documento_pdf?: string;
   tipo_empaque?: string;
   industria?: string;
+  corte?: string;
+  tamaños_por_corte?: string;
+  tamaños_por_pliego?: string;
   created_at: string;
   clientes?: {
     nombre_empresa: string;
@@ -298,6 +301,27 @@ export default function CotizacionDetalle() {
                 </div>
               )}
 
+              {cotizacion.corte && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Corte:</span>
+                  <p className="text-sm">{cotizacion.corte}</p>
+                </div>
+              )}
+
+              {cotizacion.tamaños_por_corte && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Tamaños por Corte:</span>
+                  <p className="text-sm">{cotizacion.tamaños_por_corte}</p>
+                </div>
+              )}
+
+              {cotizacion.tamaños_por_pliego && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Tamaños por Pliego:</span>
+                  <p className="text-sm">{cotizacion.tamaños_por_pliego}</p>
+                </div>
+              )}
+
               {cotizacion.observaciones && (
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Observaciones:</span>
@@ -457,6 +481,27 @@ export default function CotizacionDetalle() {
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Descripción de Montaje:</span>
                   <p className="text-sm">{selectedVersion.descripcion_montaje}</p>
+                </div>
+              )}
+
+              {selectedVersion.corte && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Corte:</span>
+                  <p className="text-sm">{selectedVersion.corte}</p>
+                </div>
+              )}
+
+              {selectedVersion.tamaños_por_corte && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Tamaños por Corte:</span>
+                  <p className="text-sm">{selectedVersion.tamaños_por_corte}</p>
+                </div>
+              )}
+
+              {selectedVersion.tamaños_por_pliego && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Tamaños por Pliego:</span>
+                  <p className="text-sm">{selectedVersion.tamaños_por_pliego}</p>
                 </div>
               )}
 

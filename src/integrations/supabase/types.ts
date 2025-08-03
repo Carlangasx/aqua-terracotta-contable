@@ -274,6 +274,7 @@ export type Database = {
         Row: {
           cantidad_cotizada: number
           cliente_id: string | null
+          corte: string | null
           created_at: string
           descripcion_montaje: string | null
           documento_pdf: string | null
@@ -285,6 +286,8 @@ export type Database = {
           observaciones: string | null
           precio_unitario: number
           sku: string
+          tamaños_por_corte: string | null
+          tamaños_por_pliego: string | null
           tipo_empaque: string | null
           troquel_id: number | null
           updated_at: string
@@ -293,6 +296,7 @@ export type Database = {
         Insert: {
           cantidad_cotizada?: number
           cliente_id?: string | null
+          corte?: string | null
           created_at?: string
           descripcion_montaje?: string | null
           documento_pdf?: string | null
@@ -304,6 +308,8 @@ export type Database = {
           observaciones?: string | null
           precio_unitario?: number
           sku: string
+          tamaños_por_corte?: string | null
+          tamaños_por_pliego?: string | null
           tipo_empaque?: string | null
           troquel_id?: number | null
           updated_at?: string
@@ -312,6 +318,7 @@ export type Database = {
         Update: {
           cantidad_cotizada?: number
           cliente_id?: string | null
+          corte?: string | null
           created_at?: string
           descripcion_montaje?: string | null
           documento_pdf?: string | null
@@ -323,6 +330,8 @@ export type Database = {
           observaciones?: string | null
           precio_unitario?: number
           sku?: string
+          tamaños_por_corte?: string | null
+          tamaños_por_pliego?: string | null
           tipo_empaque?: string | null
           troquel_id?: number | null
           updated_at?: string
