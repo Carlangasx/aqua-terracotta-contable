@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Settings, Upload } from 'lucide-react';
+import { Save, Settings, Upload, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ConfiguracionEmpresa {
   id?: string;
@@ -27,6 +28,8 @@ export default function Configuracion() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [configuracion, setConfiguracion] = useState<ConfiguracionEmpresa>({
     razon_social: '',
     rif: '',
@@ -123,6 +126,86 @@ export default function Configuracion() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleDeleteAllData = async () => {
+    setDeleting(true);
+    
+    try {
+      // Lista de todas las tablas principales del sistema
+      const tables = [
+        'cac_archivos',
+        'cac_resultados', 
+        'clientes',
+        'conciliaciones',
+        'cotizaciones',
+        'cuentas_bancarias',
+        'cuentas_por_cobrar',
+        'cuentas_por_pagar',
+        'documentos_generados',
+        'historial_elaboraciones',
+        'inventario_consumibles',
+        'log_cargas_cotizaciones',
+        'log_cargas_inventario',
+        'movimientos_inventario',
+        'pagos',
+        'productos_elaborados',
+        'productos_elaborados_archivos',
+        'productos_elaborados_historial',
+        'ventas',
+        'configuracion_empresa'
+      ];
+
+      // Eliminar datos de todas las tablas
+      await supabase.from('cac_archivos').delete().eq('user_id', user?.id);
+      await supabase.from('cac_resultados').delete().eq('user_id', user?.id);
+      await supabase.from('clientes').delete().eq('user_id', user?.id);
+      await supabase.from('conciliaciones').delete().eq('user_id', user?.id);
+      await supabase.from('cotizaciones').delete().eq('user_id', user?.id);
+      await supabase.from('cuentas_bancarias').delete().eq('user_id', user?.id);
+      await supabase.from('cuentas_por_cobrar').delete().eq('user_id', user?.id);
+      await supabase.from('cuentas_por_pagar').delete().eq('user_id', user?.id);
+      await supabase.from('documentos_generados').delete().eq('user_id', user?.id);
+      await supabase.from('historial_elaboraciones').delete().eq('user_id', user?.id);
+      await supabase.from('inventario_consumibles').delete().eq('user_id', user?.id);
+      await supabase.from('log_cargas_cotizaciones').delete().eq('usuario_id', user?.id);
+      await supabase.from('log_cargas_inventario').delete().eq('usuario_id', user?.id);
+      await supabase.from('movimientos_inventario').delete().eq('user_id', user?.id);
+      await supabase.from('pagos').delete().eq('user_id', user?.id);
+      await supabase.from('productos_elaborados').delete().eq('user_id', user?.id);
+      await supabase.from('productos_elaborados_archivos').delete().eq('user_id', user?.id);
+      await supabase.from('productos_elaborados_historial').delete().eq('user_id', user?.id);
+      await supabase.from('ventas').delete().eq('user_id', user?.id);
+      await supabase.from('configuracion_empresa').delete().eq('user_id', user?.id);
+
+      // Resetear el estado de configuración
+      setConfiguracion({
+        razon_social: '',
+        rif: '',
+        direccion_fiscal: '',
+        telefono: '',
+        correo: '',
+        condiciones_pago_default: 'Contado',
+        logo_url: ''
+      });
+
+      setShowDeleteDialog(false);
+      
+      toast({
+        title: "Datos eliminados",
+        description: "Todos los datos del sistema han sido eliminados correctamente",
+      });
+      
+    } catch (error: any) {
+      console.error('Error deleting data:', error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar los datos del sistema",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (!user) {
@@ -245,7 +328,48 @@ export default function Configuracion() {
                   </p>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-between">
+                  <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive" type="button">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Eliminar Todos los Datos
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>¿Eliminar todos los datos?</DialogTitle>
+                        <DialogDescription>
+                          Esta acción eliminará permanentemente:
+                          <br />• Todos los clientes
+                          <br />• Todas las cotizaciones y productos elaborados
+                          <br />• Todo el inventario y movimientos
+                          <br />• Todos los documentos generados
+                          <br />• Todas las cuentas bancarias y pagos
+                          <br />• La configuración de empresa
+                          <br /><br />
+                          <strong>Esta acción NO se puede deshacer.</strong>
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowDeleteDialog(false)}
+                          disabled={deleting}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={handleDeleteAllData}
+                          disabled={deleting}
+                        >
+                          {deleting ? 'Eliminando...' : 'Sí, eliminar todo'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
                   <Button type="submit" disabled={saving}>
                     <Save className="h-4 w-4 mr-2" />
                     {saving ? 'Guardando...' : 'Guardar Configuración'}
