@@ -81,6 +81,34 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
     }
   };
 
+  // Función para convertir fechas de Excel
+  const convertExcelDate = (dateValue: any): string => {
+    if (!dateValue) return '';
+    
+    // Si ya es una fecha en formato YYYY-MM-DD
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return dateValue;
+    }
+    
+    // Si es un número serial de Excel (mayor a 25000 indica fecha después de 1968)
+    if (typeof dateValue === 'number' && dateValue > 25000) {
+      const date = new Date((dateValue - 25569) * 86400 * 1000);
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Intentar convertir otros formatos de fecha
+    try {
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    } catch (error) {
+      console.warn('Could not parse date:', dateValue);
+    }
+    
+    return '';
+  };
+
   const processFile = (file: File) => {
     setLoading(true);
     const reader = new FileReader();
@@ -88,14 +116,21 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+        console.log('Raw Excel data:', jsonData);
+
         const processedData = jsonData.map((row: any, index) => {
+          const fechaOriginal = row['Fecha'];
+          const fechaConvertida = convertExcelDate(fechaOriginal);
+          
+          console.log(`Fila ${index + 1}: Fecha original:`, fechaOriginal, '-> Convertida:', fechaConvertida);
+          
           const cotizacion: CotizacionCompleta = {
-            fecha: row['Fecha'] || '',
+            fecha: fechaConvertida,
             tipo_empaque: row['Tipo de Empaque'] || '',
             industria: row['Industria'] || '',
             precio_unitario: parseFloat(row['Precio unitario']) || 0,
@@ -118,6 +153,7 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
           return cotizacion;
         });
 
+        console.log('Processed data:', processedData);
         setPreviewData(processedData);
         validateData(processedData);
         setCurrentStep('preview');
@@ -186,72 +222,98 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
     try {
       let importedCount = 0;
       let errorCount = 0;
+      const clientesCache = new Map(); // Cache para evitar duplicados
 
       for (const cotizacion of previewData) {
         try {
-          // Buscar o crear cliente
-          let clienteId = null;
-          const { data: clienteExistente } = await supabase
-            .from('clientes')
-            .select('id')
-            .eq('nombre_empresa', cotizacion.cliente)
-            .eq('user_id', user?.id)
-            .single();
-
-          if (clienteExistente) {
-            clienteId = clienteExistente.id;
-          } else {
-            // Crear cliente nuevo
-            const { data: nuevoCliente, error: clienteError } = await supabase
+          console.log(`Procesando cotización: ${cotizacion.sku} para cliente: ${cotizacion.cliente}`);
+          
+          // Buscar o crear cliente usando cache
+          let clienteId = clientesCache.get(cotizacion.cliente);
+          
+          if (!clienteId) {
+            const { data: clienteExistente } = await supabase
               .from('clientes')
-              .insert({
-                nombre_empresa: cotizacion.cliente,
-                user_id: user?.id,
-                rif: 'V-00000000-0' // RIF temporal
-              })
               .select('id')
-              .single();
+              .eq('nombre_empresa', cotizacion.cliente)
+              .eq('user_id', user?.id)
+              .maybeSingle();
 
-            if (clienteError) throw clienteError;
-            clienteId = nuevoCliente.id;
+            if (clienteExistente) {
+              clienteId = clienteExistente.id;
+              console.log(`Cliente encontrado: ${clienteId}`);
+            } else {
+              // Crear cliente nuevo con RIF único
+              const rifTemporal = `RIF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+              const { data: nuevoCliente, error: clienteError } = await supabase
+                .from('clientes')
+                .insert({
+                  nombre_empresa: cotizacion.cliente,
+                  user_id: user?.id,
+                  rif: rifTemporal
+                })
+                .select('id')
+                .single();
+
+              if (clienteError) {
+                console.error('Error creando cliente:', clienteError);
+                throw clienteError;
+              }
+              clienteId = nuevoCliente.id;
+              console.log(`Cliente creado: ${clienteId}`);
+            }
+            
+            // Guardar en cache
+            clientesCache.set(cotizacion.cliente, clienteId);
           }
 
           // Crear cotización
+          const cotizacionData = {
+            cliente_id: clienteId,
+            sku: cotizacion.sku,
+            nombre_producto: cotizacion.sku,
+            troquel_id: cotizacion.numero_troquel,
+            medidas_caja_mm: {
+              ancho_mm: cotizacion.ancho_mm,
+              alto_mm: cotizacion.alto_mm,
+              profundidad_mm: cotizacion.profundidad_mm
+            },
+            descripcion_montaje: cotizacion.nombre_troquel,
+            cantidad_cotizada: cotizacion.cantidad_cotizada,
+            precio_unitario: cotizacion.precio_unitario,
+            fecha_cotizacion: cotizacion.fecha,
+            observaciones: [
+              cotizacion.nota,
+              `Corte: ${cotizacion.corte}`,
+              `Tamaños por corte: ${cotizacion.tamaños_por_corte}`,
+              `Tamaños por pliego: ${cotizacion.tamaños_por_pliego}`,
+              cotizacion.tamaño_especial ? `Tamaño especial: ${cotizacion.tamaño_especial}` : ''
+            ].filter(Boolean).join(' | '),
+            tipo_empaque: cotizacion.tipo_empaque.toLowerCase(),
+            industria: cotizacion.industria.toLowerCase(),
+            user_id: user?.id
+          };
+
+          console.log('Insertando cotización:', cotizacionData);
+
           const { error: cotizacionError } = await supabase
             .from('cotizaciones')
-            .insert({
-              cliente_id: clienteId,
-              sku: cotizacion.sku,
-              nombre_producto: cotizacion.sku,
-              troquel_id: cotizacion.numero_troquel,
-              medidas_caja_mm: {
-                ancho_mm: cotizacion.ancho_mm,
-                alto_mm: cotizacion.alto_mm,
-                profundidad_mm: cotizacion.profundidad_mm
-              },
-              descripcion_montaje: cotizacion.nombre_troquel,
-              cantidad_cotizada: cotizacion.cantidad_cotizada,
-              precio_unitario: cotizacion.precio_unitario,
-              fecha_cotizacion: cotizacion.fecha,
-              observaciones: [
-                cotizacion.nota,
-                `Corte: ${cotizacion.corte}`,
-                `Tamaños por corte: ${cotizacion.tamaños_por_corte}`,
-                `Tamaños por pliego: ${cotizacion.tamaños_por_pliego}`,
-                cotizacion.tamaño_especial ? `Tamaño especial: ${cotizacion.tamaño_especial}` : ''
-              ].filter(Boolean).join(' | '),
-              tipo_empaque: cotizacion.tipo_empaque.toLowerCase(),
-              industria: cotizacion.industria.toLowerCase(),
-              user_id: user?.id
-            });
+            .insert(cotizacionData);
 
-          if (cotizacionError) throw cotizacionError;
+          if (cotizacionError) {
+            console.error('Error insertando cotización:', cotizacionError);
+            throw cotizacionError;
+          }
+          
           importedCount++;
+          console.log(`Cotización ${importedCount} insertada exitosamente`);
         } catch (error) {
           console.error('Error importing row:', error);
           errorCount++;
         }
       }
+
+      console.log(`Importación completada: ${importedCount} exitosas, ${errorCount} errores`);
 
       // Registrar en log
       await supabase
@@ -267,7 +329,7 @@ export default function ImportarCotizacionesCompletas({ onImportComplete }: Impo
 
       toast({
         title: "Importación completada",
-        description: `${importedCount} cotizaciones importadas exitosamente`,
+        description: `${importedCount} cotizaciones importadas exitosamente. ${errorCount > 0 ? `${errorCount} errores.` : ''}`,
       });
 
       // Delay para sincronización
