@@ -61,20 +61,6 @@ type ImportRowCotizacion = {
   selected_dieline_id?: string;
 };
 
-type DielineData = {
-  id: string;
-  sku: string;
-  nombre_producto: string;
-  alto_mm: number;
-  ancho_mm: number;
-  profundidad_mm: number;
-  troquel_id?: string;
-  descripcion_troquel?: string;
-  layout_impresion?: string;
-  estrategia_corte?: string;
-  observaciones_tecnicas?: string;
-  fuente_troquel?: string;
-};
 
 type Cliente = {
   id: string;
@@ -86,8 +72,7 @@ const VALID_TIPO_EMPAQUE = ['estuche', 'caja', 'microcorrugado', 'otro'];
 const VALID_INDUSTRIA = ['farmacia', 'cosmeticos', 'comida', 'otros'];
 
 const REQUIRED_COLUMNS = [
-  'sku', 'nombre_producto', 'cantidad_cotizada', 'precio_unitario', 'cliente_nombre',
-  'fecha_cotizacion'
+  'SKU', 'Cliente', 'Cantidad cotizada', 'Precio unitario', 'Fecha'
 ];
 
 const OPTIONAL_COLUMNS = [
@@ -105,14 +90,12 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
   const { user } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cotizacionesFile, setCotizacionesFile] = useState<File | null>(null);
-  const [dielinesFile, setDielinesFile] = useState<File | null>(null);
   const [importData, setImportData] = useState<ImportRowCotizacion[]>([]);
-  const [dielinesData, setDielinesData] = useState<DielineData[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [processing, setProcessing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState<'upload' | 'merge' | 'preview' | 'importing' | 'complete'>('upload');
+  const [currentStep, setCurrentStep] = useState<'upload' | 'preview' | 'importing' | 'complete'>('upload');
 
   const handleCotizacionesFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0];
@@ -126,12 +109,7 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
       const parsedData = await parseExcelFile(uploadedFile);
       const processedData = processImportData(parsedData);
       setImportData(processedData);
-      
-      if (dielinesFile) {
-        setCurrentStep('merge');
-      } else {
-        setCurrentStep('preview');
-      }
+      setCurrentStep('preview');
       
     } catch (error) {
       console.error('Error al procesar archivo de cotizaciones:', error);
@@ -141,29 +119,6 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
     }
   };
 
-  const handleDielinesFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFile = event.target.files?.[0];
-    if (!uploadedFile) return;
-
-    setDielinesFile(uploadedFile);
-    setProcessing(true);
-    
-    try {
-      const parsedData = await parseExcelFile(uploadedFile);
-      const processedDielines = processDielinesData(parsedData);
-      setDielinesData(processedDielines);
-      
-      if (cotizacionesFile && importData.length > 0) {
-        setCurrentStep('merge');
-      }
-      
-    } catch (error) {
-      console.error('Error al procesar archivo de dielines:', error);
-      toast.error("Error al procesar el archivo de dielines");
-    } finally {
-      setProcessing(false);
-    }
-  };
 
   const parseExcelFile = async (file: File): Promise<any[]> => {
     if (file.name.endsWith('.csv')) {
@@ -216,53 +171,33 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
         profundidad_mm: row['Profundidad mm']?.toString() || '',
         troquel_id: row['Numero de troquel']?.toString() || '',
         descripcion_troquel: row['Nombre troquel']?.toString() || '',
-        layout_impresion: row['Tamaños por corte']?.toString() || '',
+        layout_impresion: `${row['Tamaños por corte']?.toString() || ''} ${row['Tamaños por pliego']?.toString() || ''}`.trim(),
         estrategia_corte: row['Corte']?.toString() || '',
         observaciones_tecnicas: row['Tamaño especial']?.toString() || '',
         fuente_troquel: '',
         cliente_exists: false,
-        dieline_matched: false,
+        dieline_matched: true, // Ya incluye toda la información técnica
         errors: [],
         warnings: [],
         status: 'valid'
       };
-
-      if (row['Tamaños por pliego']) {
-        processedRow.layout_impresion = `${processedRow.layout_impresion} ${row['Tamaños por pliego']}`.trim();
-      }
 
       validateRow(processedRow);
       return processedRow;
     });
   };
 
-  const processDielinesData = (rawData: any[]): DielineData[] => {
-    return rawData.map((row, index) => ({
-      id: `dieline_${index}`,
-      sku: row.sku?.toString() || '',
-      nombre_producto: row.nombre_producto?.toString() || '',
-      alto_mm: parseFloat(row.alto_mm) || 0,
-      ancho_mm: parseFloat(row.ancho_mm) || 0,
-      profundidad_mm: parseFloat(row.profundidad_mm) || 0,
-      troquel_id: row.troquel_id?.toString() || '',
-      descripcion_troquel: row.descripcion_troquel?.toString() || '',
-      layout_impresion: row.layout_impresion?.toString() || '',
-      estrategia_corte: row.estrategia_corte?.toString() || '',
-      observaciones_tecnicas: row.observaciones_tecnicas?.toString() || '',
-      fuente_troquel: row.fuente_troquel?.toString() || ''
-    }));
-  };
 
   const validateRow = (row: ImportRowCotizacion) => {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Validar campos requeridos
-    REQUIRED_COLUMNS.forEach(column => {
-      if (!row[column as keyof ImportRowCotizacion] || row[column as keyof ImportRowCotizacion] === '') {
-        errors.push(`${column} es requerido`);
-      }
-    });
+    // Validar campos requeridos básicos
+    if (!row.sku) errors.push('SKU es requerido');
+    if (!row.cliente_nombre) errors.push('Cliente es requerido');
+    if (!row.cantidad_cotizada) errors.push('Cantidad cotizada es requerida');
+    if (!row.precio_unitario) errors.push('Precio unitario es requerido');
+    if (!row.fecha_cotizacion) errors.push('Fecha es requerida');
 
     // Validar SKU único
     if (row.sku && row.sku.length < 3) {
@@ -324,97 +259,7 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
     row.status = errors.length > 0 ? 'error' : warnings.length > 0 ? 'warning' : 'valid';
   };
 
-  const performDielineMatching = useCallback(() => {
-    if (!dielinesData.length || !importData.length) return;
 
-    const updatedImportData = importData.map(row => {
-      let matchedDieline: DielineData | undefined;
-      let matchType: 'sku' | 'dimensions' | 'none' = 'none';
-
-      // Preferencia 1: Coincidencia exacta por SKU
-      matchedDieline = dielinesData.find(d => 
-        d.sku.toLowerCase() === row.sku.toLowerCase() ||
-        d.nombre_producto.toLowerCase() === row.nombre_producto.toLowerCase()
-      );
-
-      if (matchedDieline) {
-        matchType = 'sku';
-      } else {
-        // Preferencia 2: Coincidencia por dimensiones (tolerancia ±1mm)
-        if (row.alto_mm && row.ancho_mm && row.profundidad_mm) {
-          const alto = parseFloat(row.alto_mm);
-          const ancho = parseFloat(row.ancho_mm);
-          const prof = parseFloat(row.profundidad_mm);
-
-          matchedDieline = dielinesData.find(d => 
-            Math.abs(d.alto_mm - alto) <= 1 &&
-            Math.abs(d.ancho_mm - ancho) <= 1 &&
-            Math.abs(d.profundidad_mm - prof) <= 1
-          );
-
-          if (matchedDieline) {
-            matchType = 'dimensions';
-          }
-        }
-      }
-
-      if (matchedDieline) {
-        return {
-          ...row,
-          // Fusionar información técnica del dieline
-          troquel_id: matchedDieline.troquel_id || row.troquel_id,
-          descripcion_troquel: matchedDieline.descripcion_troquel || row.descripcion_troquel,
-          layout_impresion: matchedDieline.layout_impresion || row.layout_impresion,
-          estrategia_corte: matchedDieline.estrategia_corte || row.estrategia_corte,
-          observaciones_tecnicas: matchedDieline.observaciones_tecnicas || row.observaciones_tecnicas,
-          fuente_troquel: matchedDieline.fuente_troquel || row.fuente_troquel,
-          // Si las dimensiones están vacías, usar las del dieline
-          alto_mm: row.alto_mm || matchedDieline.alto_mm.toString(),
-          ancho_mm: row.ancho_mm || matchedDieline.ancho_mm.toString(),
-          profundidad_mm: row.profundidad_mm || matchedDieline.profundidad_mm.toString(),
-          dieline_matched: true,
-          dieline_match_type: matchType as 'sku' | 'dimensions' | 'manual' | 'none',
-          warnings: [...row.warnings, `Match automático encontrado por ${matchType === 'sku' ? 'SKU' : 'dimensiones'}`]
-        };
-      } else {
-        return {
-          ...row,
-          dieline_matched: false,
-          dieline_match_type: 'none' as 'sku' | 'dimensions' | 'manual' | 'none',
-          warnings: [...row.warnings, 'No se encontró dieline automáticamente']
-        };
-      }
-    });
-
-    setImportData(updatedImportData);
-    setCurrentStep('preview');
-  }, [dielinesData, importData]);
-
-  const handleManualDielineAssignment = (rowIndex: number, dielineId: string) => {
-    const updatedData = [...importData];
-    const selectedDieline = dielinesData.find(d => d.id === dielineId);
-    
-    if (selectedDieline) {
-      updatedData[rowIndex] = {
-        ...updatedData[rowIndex],
-        troquel_id: selectedDieline.troquel_id || '',
-        descripcion_troquel: selectedDieline.descripcion_troquel || '',
-        layout_impresion: selectedDieline.layout_impresion || '',
-        estrategia_corte: selectedDieline.estrategia_corte || '',
-        observaciones_tecnicas: selectedDieline.observaciones_tecnicas || '',
-        fuente_troquel: selectedDieline.fuente_troquel || '',
-        alto_mm: selectedDieline.alto_mm.toString(),
-        ancho_mm: selectedDieline.ancho_mm.toString(),
-        profundidad_mm: selectedDieline.profundidad_mm.toString(),
-        dieline_matched: true,
-        dieline_match_type: 'manual',
-        selected_dieline_id: dielineId,
-        warnings: updatedData[rowIndex].warnings.filter(w => !w.includes('dieline')).concat(['Asignación manual de dieline'])
-      };
-      
-      setImportData(updatedData);
-    }
-  };
 
   const createMissingCliente = async (clienteNombre: string): Promise<string | null> => {
     try {
@@ -507,13 +352,13 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
             .from('log_cargas_cotizaciones')
             .insert({
               usuario_id: user.id,
-              nombre_archivo: `${cotizacionesFile?.name || 'cotizaciones'} + ${dielinesFile?.name || 'dielines'}`,
+              nombre_archivo: cotizacionesFile?.name || 'cotizaciones.xlsx',
               total_filas: importData.length,
               filas_insertadas: importedCount,
               filas_actualizadas: updatedCount,
               filas_con_error: errors.length,
               detalle_errores: errors,
-              tamaño_archivo: (cotizacionesFile?.size || 0) + (dielinesFile?.size || 0)
+              tamaño_archivo: cotizacionesFile?.size || 0
             });
         } catch (logError) {
           console.error('Error registrando log:', logError);
@@ -534,9 +379,7 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
 
   const resetImport = () => {
     setCotizacionesFile(null);
-    setDielinesFile(null);
     setImportData([]);
-    setDielinesData([]);
     setCurrentStep('upload');
     setImportProgress(0);
     setProcessing(false);
@@ -568,8 +411,7 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
   };
 
   const downloadTemplates = () => {
-    // Plantilla de cotizaciones
-    const cotizacionesTemplate = [
+    const template = [
       {
         'Fecha': '2024-01-15',
         'Tipo de Empaque': 'estuche',
@@ -592,34 +434,12 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
       }
     ];
 
-    // Plantilla de dielines
-    const dielinesTemplate = [
-      {
-        sku: 'FARM-001',
-        nombre_producto: 'Estuche Paracetamol',
-        alto_mm: 95,
-        ancho_mm: 45,
-        profundidad_mm: 28,
-        troquel_id: 'TR-001',
-        descripcion_troquel: 'Troquel estándar para estuches farmacéuticos',
-        layout_impresion: '2x4 unidades por hoja 70x100cm',
-        estrategia_corte: 'Corte guillotina + troquel',
-        observaciones_tecnicas: 'Ventana plástica en panel frontal',
-        fuente_troquel: 'Archivo CAD proporcionado por cliente'
-      }
-    ];
-
     const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(template);
+    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla_Cotizaciones');
+    XLSX.writeFile(wb, 'plantilla_cotizaciones.xlsx');
     
-    const wsCotizaciones = XLSX.utils.json_to_sheet(cotizacionesTemplate);
-    XLSX.utils.book_append_sheet(wb, wsCotizaciones, 'Plantilla_Cotizaciones');
-    
-    const wsDielines = XLSX.utils.json_to_sheet(dielinesTemplate);
-    XLSX.utils.book_append_sheet(wb, wsDielines, 'Plantilla_Dielines');
-    
-    XLSX.writeFile(wb, 'plantillas_cotizaciones_completas.xlsx');
-    
-    toast.success("Plantillas descargadas exitosamente");
+    toast.success("Plantilla descargada exitosamente");
   };
 
   const getStatusIcon = (status: 'valid' | 'error' | 'warning') => {
@@ -656,12 +476,11 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
         </DialogHeader>
 
         <Tabs value={currentStep} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="upload">1. Cargar Archivos</TabsTrigger>
-            <TabsTrigger value="merge">2. Fusionar Datos</TabsTrigger>
-            <TabsTrigger value="preview">3. Vista Previa</TabsTrigger>
-            <TabsTrigger value="importing">4. Importando</TabsTrigger>
-            <TabsTrigger value="complete">5. Completado</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="upload">1. Cargar Archivo</TabsTrigger>
+            <TabsTrigger value="preview">2. Vista Previa</TabsTrigger>
+            <TabsTrigger value="importing">3. Importando</TabsTrigger>
+            <TabsTrigger value="complete">4. Completado</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-4">
@@ -674,74 +493,43 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Descarga las plantillas Excel con el formato requerido para cargar cotizaciones y dielines.
+                  Descarga la plantilla Excel con el formato requerido para cargar cotizaciones.
                 </p>
                 <Button onClick={downloadTemplates} variant="outline" className="gap-2">
                   <Download className="h-4 w-4" />
-                  Descargar Plantillas Completas
+                  Descargar Plantilla
                 </Button>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package2 className="h-4 w-4" />
-                    Archivo de Cotizaciones
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Archivo principal con información comercial y de cotización.
-                    </p>
-                    <div>
-                      <Label htmlFor="cotizaciones-upload">plantilla_cotizaciones.xlsx</Label>
-                      <Input
-                        id="cotizaciones-upload"
-                        type="file"
-                        accept=".csv,.xlsx,.xls"
-                        onChange={handleCotizacionesFileUpload}
-                        disabled={processing}
-                      />
-                    </div>
-                    {cotizacionesFile && (
-                      <p className="text-sm text-green-600">✓ {cotizacionesFile.name}</p>
-                    )}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package2 className="h-4 w-4" />
+                  Archivo de Cotizaciones
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Archivo Excel con información completa de cotizaciones y especificaciones técnicas.
+                  </p>
+                  <div>
+                    <Label htmlFor="cotizaciones-upload">Seleccionar archivo Excel</Label>
+                    <Input
+                      id="cotizaciones-upload"
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={handleCotizacionesFileUpload}
+                      disabled={processing}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Archivo de Dielines (Opcional)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Información técnica de troqueles y especificaciones.
-                    </p>
-                    <div>
-                      <Label htmlFor="dielines-upload">dielines.xlsx</Label>
-                      <Input
-                        id="dielines-upload"
-                        type="file"
-                        accept=".csv,.xlsx,.xls"
-                        onChange={handleDielinesFileUpload}
-                        disabled={processing}
-                      />
-                    </div>
-                    {dielinesFile && (
-                      <p className="text-sm text-green-600">✓ {dielinesFile.name}</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  {cotizacionesFile && (
+                    <p className="text-sm text-green-600">✓ {cotizacionesFile.name}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {processing && (
               <Card>
@@ -754,47 +542,6 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
             )}
           </TabsContent>
 
-          <TabsContent value="merge" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Merge className="h-4 w-4" />
-                  Fusión de Datos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    El sistema buscará coincidencias entre cotizaciones y dielines automáticamente.
-                  </p>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{importData.length}</div>
-                      <div className="text-sm text-muted-foreground">Cotizaciones</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{dielinesData.length}</div>
-                      <div className="text-sm text-muted-foreground">Dielines</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{matchedCount}</div>
-                      <div className="text-sm text-muted-foreground">Coincidencias</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600">{unmatchedCount}</div>
-                      <div className="text-sm text-muted-foreground">Sin Match</div>
-                    </div>
-                  </div>
-
-                  <Button onClick={performDielineMatching} className="w-full">
-                    <Merge className="h-4 w-4 mr-2" />
-                    Fusionar Datos Automáticamente
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="preview" className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
@@ -833,9 +580,9 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
                     <TableHead>SKU</TableHead>
                     <TableHead>Producto</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Match</TableHead>
+                    <TableHead>Troquel</TableHead>
                     <TableHead>Dimensiones</TableHead>
-                    <TableHead>Asignación Manual</TableHead>
+                    
                     <TableHead>Errores/Advertencias</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -866,19 +613,15 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
                         </div>
                       </TableCell>
                       <TableCell>
-                        {row.dieline_matched ? (
+                        {row.troquel_id ? (
                           <div className="flex items-center gap-1">
                             <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span className="text-xs text-green-600">
-                              {row.dieline_match_type === 'sku' ? 'Por SKU' : 
-                               row.dieline_match_type === 'dimensions' ? 'Por dimensiones' : 
-                               'Manual'}
-                            </span>
+                            <span className="text-xs font-mono">{row.troquel_id}</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1">
                             <XCircle className="h-3 w-3 text-red-500" />
-                            <span className="text-xs text-red-600">Sin match</span>
+                            <span className="text-xs text-red-600">Sin troquel</span>
                           </div>
                         )}
                       </TableCell>
@@ -889,25 +632,6 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
                           </span>
                         ) : (
                           <span className="text-muted-foreground">Sin dimensiones</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {!row.dieline_matched && dielinesData.length > 0 && row.status !== 'error' && (
-                          <Select 
-                            value={row.selected_dieline_id || ''} 
-                            onValueChange={(value) => handleManualDielineAssignment(index, value)}
-                          >
-                            <SelectTrigger className="w-32 h-8 text-xs">
-                              <SelectValue placeholder="Asignar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {dielinesData.map((dieline) => (
-                                <SelectItem key={dieline.id} value={dieline.id} className="text-xs">
-                                  {dieline.sku || dieline.nombre_producto}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                         )}
                       </TableCell>
                       <TableCell>
