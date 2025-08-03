@@ -15,6 +15,7 @@ import ImportarInventario from "./pages/ImportarInventario";
 import ProductosElaborados from "./pages/ProductosElaborados";
 import Cotizaciones from "./pages/Cotizaciones";
 import NuevaCotizacion from "./pages/NuevaCotizacion";
+import EditarCotizacion from "./pages/EditarCotizacion";
 import CotizacionDetalle from "./pages/CotizacionDetalle";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import CuentasPorPagar from "./pages/CuentasPorPagar";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/productos-elaborados" element={<ProductosElaborados />} />
           <Route path="/cotizaciones" element={<Cotizaciones />} />
           <Route path="/cotizaciones/nueva" element={<NuevaCotizacion />} />
+          <Route path="/cotizaciones/editar/:id" element={<EditarCotizacion />} />
           <Route path="/cotizaciones/:id" element={<CotizacionDetalle />} />
             <Route path="/cuentas-cobrar" element={<CuentasPorCobrar />} />
             <Route path="/cuentas-pagar" element={<CuentasPorPagar />} />
