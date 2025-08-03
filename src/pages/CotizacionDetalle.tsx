@@ -294,12 +294,6 @@ export default function CotizacionDetalle() {
                 </div>
               )}
 
-              {cotizacion.descripcion_montaje && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Descripción de Montaje:</span>
-                  <p className="text-sm">{cotizacion.descripcion_montaje}</p>
-                </div>
-              )}
 
               {cotizacion.corte && (
                 <div>
@@ -477,12 +471,6 @@ export default function CotizacionDetalle() {
                 </div>
               )}
 
-              {selectedVersion.descripcion_montaje && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Descripción de Montaje:</span>
-                  <p className="text-sm">{selectedVersion.descripcion_montaje}</p>
-                </div>
-              )}
 
               {selectedVersion.corte && (
                 <div>
