@@ -86,14 +86,15 @@ const VALID_TIPO_EMPAQUE = ['estuche', 'caja', 'microcorrugado', 'otro'];
 const VALID_INDUSTRIA = ['farmacia', 'cosmeticos', 'comida', 'otros'];
 
 const REQUIRED_COLUMNS = [
-  'sku', 'nombre_producto', 'cantidad_cotizada', 'precio_unitario', 'cliente_nombre'
+  'sku', 'nombre_producto', 'cantidad_cotizada', 'precio_unitario', 'cliente_nombre',
+  'fecha_cotizacion'
 ];
 
 const OPTIONAL_COLUMNS = [
-  'concentracion', 'cantidad_presentacion', 'fecha_cotizacion', 'tipo_empaque', 
-  'descripcion_montaje', 'observaciones_cotizacion', 'industria', 'alto_mm', 
-  'ancho_mm', 'profundidad_mm', 'troquel_id', 'descripcion_troquel', 
-  'layout_impresion', 'estrategia_corte', 'observaciones_tecnicas', 'fuente_troquel'
+  'fecha_cotizacion', 'tipo_empaque', 'descripcion_montaje', 'observaciones_cotizacion',
+  'industria', 'alto_mm', 'ancho_mm', 'profundidad_mm', 'troquel_id',
+  'descripcion_troquel', 'layout_impresion', 'estrategia_corte',
+  'observaciones_tecnicas', 'fuente_troquel'
 ];
 
 interface ImportarCotizacionesProps {
@@ -198,33 +199,37 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
     return rawData.map((row, index) => {
       const processedRow: ImportRowCotizacion = {
         index: index + 1,
-        sku: row.sku?.toString() || '',
-        nombre_producto: row.nombre_producto?.toString() || '',
-        concentracion: row.concentracion?.toString() || '',
-        cantidad_presentacion: row.cantidad_presentacion?.toString() || '',
-        cliente_nombre: row.cliente_nombre?.toString() || '',
-        fecha_cotizacion: row.fecha_cotizacion?.toString() || '',
-        cantidad_cotizada: row.cantidad_cotizada?.toString() || '',
-        precio_unitario: row.precio_unitario?.toString() || '',
-        tipo_empaque: row.tipo_empaque?.toString() || '',
-        descripcion_montaje: row.descripcion_montaje?.toString() || '',
-        observaciones_cotizacion: row.observaciones_cotizacion?.toString() || '',
-        industria: row.industria?.toString() || '',
-        alto_mm: row.alto_mm?.toString() || '',
-        ancho_mm: row.ancho_mm?.toString() || '',
-        profundidad_mm: row.profundidad_mm?.toString() || '',
-        troquel_id: row.troquel_id?.toString() || '',
-        descripcion_troquel: row.descripcion_troquel?.toString() || '',
-        layout_impresion: row.layout_impresion?.toString() || '',
-        estrategia_corte: row.estrategia_corte?.toString() || '',
-        observaciones_tecnicas: row.observaciones_tecnicas?.toString() || '',
-        fuente_troquel: row.fuente_troquel?.toString() || '',
+        sku: row['SKU']?.toString() || '',
+        nombre_producto: row['Nombre troquel']?.toString() || '',
+        concentracion: '',
+        cantidad_presentacion: '',
+        cliente_nombre: row['Cliente']?.toString() || '',
+        fecha_cotizacion: row['Fecha']?.toString() || '',
+        cantidad_cotizada: row['Cantidad cotizada']?.toString() || '',
+        precio_unitario: row['Precio unitario']?.toString() || '',
+        tipo_empaque: row['Tipo de Empaque']?.toString() || '',
+        descripcion_montaje: row['Tamaño']?.toString() || '',
+        observaciones_cotizacion: row['Nota']?.toString() || '',
+        industria: row['Industria']?.toString() || '',
+        alto_mm: row['Alto mm']?.toString() || '',
+        ancho_mm: row['Ancho mm']?.toString() || '',
+        profundidad_mm: row['Profundidad mm']?.toString() || '',
+        troquel_id: row['Numero de troquel']?.toString() || '',
+        descripcion_troquel: row['Nombre troquel']?.toString() || '',
+        layout_impresion: row['Tamaños por corte']?.toString() || '',
+        estrategia_corte: row['Corte']?.toString() || '',
+        observaciones_tecnicas: row['Tamaño especial']?.toString() || '',
+        fuente_troquel: '',
         cliente_exists: false,
         dieline_matched: false,
         errors: [],
         warnings: [],
         status: 'valid'
       };
+
+      if (row['Tamaños por pliego']) {
+        processedRow.layout_impresion = `${processedRow.layout_impresion} ${row['Tamaños por pliego']}`.trim();
+      }
 
       validateRow(processedRow);
       return processedRow;
@@ -285,6 +290,11 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
     // Validar industria
     if (row.industria && !VALID_INDUSTRIA.includes(row.industria.toLowerCase())) {
       warnings.push(`Industria '${row.industria}' no está en la lista estándar`);
+    }
+
+    // Validar fecha
+    if (row.fecha_cotizacion && isNaN(Date.parse(row.fecha_cotizacion))) {
+      errors.push('Fecha debe tener formato válido');
     }
 
     // Validar números
@@ -471,7 +481,7 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
           },
           troquel_id: row.troquel_id ? parseInt(row.troquel_id) : null,
           observaciones: row.observaciones_cotizacion || null,
-          fecha_cotizacion: new Date().toISOString().split('T')[0]
+          fecha_cotizacion: row.fecha_cotizacion || new Date().toISOString().split('T')[0]
         };
 
         // Insertar cotización
@@ -561,21 +571,24 @@ const ImportarCotizaciones = ({ onImportComplete }: ImportarCotizacionesProps) =
     // Plantilla de cotizaciones
     const cotizacionesTemplate = [
       {
-        sku: 'FARM-001',
-        nombre_producto: 'Estuche Paracetamol',
-        concentracion: '500mg',
-        cantidad_presentacion: '10 tabletas',
-        cliente_nombre: 'Laboratorios ABC',
-        fecha_cotizacion: '2024-01-15',
-        cantidad_cotizada: 1000,
-        precio_unitario: 0.85,
-        tipo_empaque: 'estuche',
-        descripcion_montaje: 'Troquelado especial con ventana',
-        observaciones_cotizacion: 'Urgente para producción Q1',
-        industria: 'farmacia',
-        alto_mm: 95,
-        ancho_mm: 45,
-        profundidad_mm: 28
+        'Fecha': '2024-01-15',
+        'Tipo de Empaque': 'estuche',
+        'Industria': 'farmacia',
+        'Precio unitario': 0.85,
+        'Cantidad cotizada': 1000,
+        'Numero de troquel': '1',
+        'Cliente': 'Laboratorios ABC',
+        'Nombre troquel': 'Estuche Paracetamol',
+        'Tamaño': 'Troquelado especial con ventana',
+        'Alto mm': 95,
+        'Ancho mm': 45,
+        'Profundidad mm': 28,
+        'SKU': 'FARM-001',
+        'Corte': 'Corte guillotina + troquel',
+        'Tamaños por corte': '2x4',
+        'Tamaños por pliego': '8',
+        'Tamaño especial': 'N/A',
+        'Nota': 'Urgente para producción Q1'
       }
     ];
 

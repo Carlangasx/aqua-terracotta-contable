@@ -176,6 +176,7 @@ export default function Dashboard() {
     { name: 'Inventario', icon: Package, path: '/inventario' },
     { name: 'Reportes', icon: BarChart3, path: '/reportes' },
     { name: 'Productos Elaborados', icon: Boxes, path: '/productos-elaborados' },
+    { name: 'Cotizaciones', icon: FileText, path: '/cotizaciones' },
     { name: 'Configuración', icon: Settings, path: '/configuracion' },
   ];
 
