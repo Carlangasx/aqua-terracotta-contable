@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MainLayout } from '@/components/MainLayout';
 import ImportarCotizaciones from '@/components/ImportarCotizaciones';
+import ImportarCotizacionesCompletas from '@/components/ImportarCotizacionesCompletas';
 
 interface Cotizacion {
   id: string;
@@ -156,6 +157,7 @@ export default function Cotizaciones() {
             <p className="text-muted-foreground">Gestiona las cotizaciones de productos para tus clientes</p>
           </div>
           <div className="flex gap-2">
+            <ImportarCotizacionesCompletas onImportComplete={fetchCotizaciones} />
             <ImportarCotizaciones onImportComplete={fetchCotizaciones} />
             <Button 
               className="shadow-lg"
