@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Package, DollarSign, Ruler, FileText, Plus, Filter } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Calendar, Search, Package, DollarSign, Ruler, FileText, Plus, Filter, Grid, List } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +35,9 @@ interface Cotizacion {
   documento_pdf?: string;
   tipo_empaque?: string;
   industria?: string;
+  corte?: string;
+  tamaños_por_corte?: string;
+  tamaños_por_pliego?: string;
   clientes?: {
     nombre_empresa: string;
     industria?: string;
@@ -65,6 +69,7 @@ export default function Cotizaciones() {
   const [selectedTipoEmpaque, setSelectedTipoEmpaque] = useState<string>('');
   const [selectedIndustria, setSelectedIndustria] = useState<string>('');
   const [clientes, setClientes] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   useEffect(() => {
     if (user) {
@@ -157,6 +162,22 @@ export default function Cotizaciones() {
             <p className="text-muted-foreground">Gestiona las cotizaciones de productos para tus clientes</p>
           </div>
           <div className="flex gap-2">
+            <div className="flex border rounded-md">
+              <Button
+                variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('cards')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
             <ImportarCotizacionesCompletas onImportComplete={fetchCotizaciones} />
             <ImportarCotizaciones onImportComplete={fetchCotizaciones} />
             <Button 
@@ -235,88 +256,160 @@ export default function Cotizaciones() {
         </Card>
 
         {/* Lista de Cotizaciones */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCotizaciones.map((cotizacion) => (
-            <Card 
-              key={cotizacion.id} 
-              className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-primary"
-              onClick={() => navigate(`/cotizaciones/${cotizacion.id}`)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-semibold text-foreground mb-1">
-                      {cotizacion.nombre_producto}
-                    </CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground">
-                      SKU: {cotizacion.sku}
-                    </CardDescription>
+        {viewMode === 'cards' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCotizaciones.map((cotizacion) => (
+              <Card 
+                key={cotizacion.id} 
+                className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-primary"
+                onClick={() => navigate(`/cotizaciones/${cotizacion.id}`)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg font-semibold text-foreground mb-1">
+                        {cotizacion.nombre_producto}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        SKU: {cotizacion.sku}
+                      </CardDescription>
+                    </div>
+                    {cotizacion.documento_pdf && (
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </div>
-                  {cotizacion.documento_pdf && (
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Cliente:</span>
-                  <span className="text-sm font-semibold text-foreground">
-                     {cotizacion.clientes?.nombre_empresa || 'Sin cliente asignado'}
-                   </span>
-                </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Cliente:</span>
+                    <span className="text-sm font-semibold text-foreground">
+                       {cotizacion.clientes?.nombre_empresa || 'Sin cliente asignado'}
+                     </span>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Precio unitario:</span>
-                  <span className="text-sm font-bold text-primary">
-                    {formatPrice(cotizacion.precio_unitario)}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Cantidad:</span>
-                  <span className="text-sm text-foreground">
-                    {cotizacion.cantidad_cotizada.toLocaleString()} und
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Medidas:</span>
-                  <span className="text-sm text-foreground flex items-center gap-1">
-                    <Ruler className="h-3 w-3" />
-                    {cotizacion.medidas_caja_mm.ancho_mm} × {cotizacion.medidas_caja_mm.alto_mm} × {cotizacion.medidas_caja_mm.profundidad_mm} mm
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {cotizacion.tipo_empaque && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Package className="h-3 w-3 mr-1" />
-                      {tiposEmpaque.find(t => t.value === cotizacion.tipo_empaque)?.label}
-                    </Badge>
-                  )}
-                  {cotizacion.industria && (
-                    <Badge variant="outline" className="text-xs">
-                      {industrias.find(i => i.value === cotizacion.industria)?.label}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(cotizacion.fecha_cotizacion), 'dd/MM/yyyy', { locale: es })}
-                  </span>
-                  {cotizacion.troquel_id && (
-                    <span className="text-xs text-muted-foreground">
-                      Troquel #{cotizacion.troquel_id}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Precio unitario:</span>
+                    <span className="text-sm font-bold text-primary">
+                      {formatPrice(cotizacion.precio_unitario)}
                     </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Cantidad:</span>
+                    <span className="text-sm text-foreground">
+                      {cotizacion.cantidad_cotizada.toLocaleString()} und
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Medidas:</span>
+                    <span className="text-sm text-foreground flex items-center gap-1">
+                      <Ruler className="h-3 w-3" />
+                      {cotizacion.medidas_caja_mm.ancho_mm} × {cotizacion.medidas_caja_mm.alto_mm} × {cotizacion.medidas_caja_mm.profundidad_mm} mm
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {cotizacion.tipo_empaque && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Package className="h-3 w-3 mr-1" />
+                        {tiposEmpaque.find(t => t.value === cotizacion.tipo_empaque)?.label}
+                      </Badge>
+                    )}
+                    {cotizacion.industria && (
+                      <Badge variant="outline" className="text-xs">
+                        {industrias.find(i => i.value === cotizacion.industria)?.label}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(cotizacion.fecha_cotizacion), 'dd/MM/yyyy', { locale: es })}
+                    </span>
+                    {cotizacion.troquel_id && (
+                      <span className="text-xs text-muted-foreground">
+                        Troquel #{cotizacion.troquel_id}
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Lista de Cotizaciones</CardTitle>
+              <CardDescription>
+                Vista tabular de todas las cotizaciones ({filteredCotizaciones.length} registros)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Número de troquel</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Nombre troquel</TableHead>
+                      <TableHead>Tamaño</TableHead>
+                      <TableHead>Alto mm</TableHead>
+                      <TableHead>Ancho mm</TableHead>
+                      <TableHead>Profundidad mm</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Corte</TableHead>
+                      <TableHead>Tamaños por corte</TableHead>
+                      <TableHead>Tamaños por pliego</TableHead>
+                      <TableHead>Tamaño especial</TableHead>
+                      <TableHead>Nota</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCotizaciones.map((cotizacion) => {
+                      // Extraer tamaño especial y nota de observaciones
+                      const observaciones = cotizacion.observaciones || '';
+                      const tamañoEspecial = observaciones.includes('Tamaño especial:') 
+                        ? observaciones.split('Tamaño especial:')[1]?.split('|')[0]?.trim() 
+                        : '';
+                      const nota = observaciones.split('|').find(part => 
+                        !part.includes('Tamaño especial:') && part.trim()
+                      )?.trim() || '';
+
+                      return (
+                        <TableRow 
+                          key={cotizacion.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => navigate(`/cotizaciones/${cotizacion.id}`)}
+                        >
+                          <TableCell>{cotizacion.troquel_id || '-'}</TableCell>
+                          <TableCell>{cotizacion.clientes?.nombre_empresa || 'Sin cliente'}</TableCell>
+                          <TableCell>{cotizacion.descripcion_montaje || '-'}</TableCell>
+                          <TableCell>
+                            {cotizacion.medidas_caja_mm.ancho_mm}×{cotizacion.medidas_caja_mm.alto_mm}×{cotizacion.medidas_caja_mm.profundidad_mm}mm
+                          </TableCell>
+                          <TableCell>{cotizacion.medidas_caja_mm.alto_mm}</TableCell>
+                          <TableCell>{cotizacion.medidas_caja_mm.ancho_mm}</TableCell>
+                          <TableCell>{cotizacion.medidas_caja_mm.profundidad_mm}</TableCell>
+                          <TableCell className="font-medium">{cotizacion.sku}</TableCell>
+                          <TableCell>{cotizacion.corte || '-'}</TableCell>
+                          <TableCell>{cotizacion.tamaños_por_corte || '-'}</TableCell>
+                          <TableCell>{cotizacion.tamaños_por_pliego || '-'}</TableCell>
+                          <TableCell>{tamañoEspecial || '-'}</TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={nota}>
+                            {nota || '-'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {filteredCotizaciones.length === 0 && (
           <Card className="text-center py-12">
