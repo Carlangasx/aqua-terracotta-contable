@@ -242,7 +242,7 @@ export default function CotizacionDetalle() {
             </p>
           </div>
         </div>
-        <Button>
+        <Button onClick={() => navigate(`/cotizaciones/editar/${cotizacion.id}`)}>
           <Edit className="h-4 w-4 mr-2" />
           Editar Cotización
         </Button>
