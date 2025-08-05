@@ -38,6 +38,7 @@ interface Cotizacion {
   corte?: string;
   tamaños_por_corte?: string;
   tamaños_por_pliego?: string;
+  created_at: string;
   clientes?: {
     nombre_empresa: string;
     industria?: string;
@@ -125,7 +126,18 @@ export default function Cotizaciones() {
     }
   };
 
-  const filteredCotizaciones = cotizaciones.filter(cotizacion => {
+  // Filtrar solo las versiones más recientes por SKU
+  const latestCotizaciones = cotizaciones.reduce((acc, cotizacion) => {
+    const existing = acc.find(c => c.sku === cotizacion.sku);
+    if (!existing || new Date(cotizacion.created_at) > new Date(existing.created_at)) {
+      const filtered = acc.filter(c => c.sku !== cotizacion.sku);
+      filtered.push(cotizacion);
+      return filtered;
+    }
+    return acc;
+  }, [] as Cotizacion[]);
+
+  const filteredCotizaciones = latestCotizaciones.filter(cotizacion => {
     const matchesSearch = 
       cotizacion.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cotizacion.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
