@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, ArrowLeft, Package, DollarSign, Ruler, FileText, Copy, Download, Eye, Edit } from 'lucide-react';
+import { Calendar, ArrowLeft, Package, DollarSign, Ruler, FileText, Copy, Download, Eye, Edit, Plus, History, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -226,34 +226,44 @@ export default function CotizacionDetalle() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/cotizaciones')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{cotizacion.nombre_producto}</h1>
-            <p className="text-muted-foreground">
-              SKU: {cotizacion.sku} • Cliente: {cotizacion.clientes?.nombre_empresa}
-            </p>
+    <div className="flex h-screen">
+      {/* Contenido principal */}
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/cotizaciones')}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">{cotizacion.nombre_producto}</h1>
+                <p className="text-muted-foreground">
+                  SKU: {cotizacion.sku} • Cliente: {cotizacion.clientes?.nombre_empresa}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => handleCopiarCotizacion(cotizacion)}
+                variant="outline"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Actualizar Cotización
+              </Button>
+              <Button onClick={() => navigate(`/cotizaciones/editar/${cotizacion.id}`)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Cotización
+              </Button>
+            </div>
           </div>
-        </div>
-        <Button onClick={() => navigate(`/cotizaciones/editar/${cotizacion.id}`)}>
-          <Edit className="h-4 w-4 mr-2" />
-          Editar Cotización
-        </Button>
-      </div>
 
-      {/* Información Principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+          {/* Información Principal */}
           <Card>
             <CardHeader>
               <CardTitle>Información de la Cotización</CardTitle>
@@ -293,7 +303,6 @@ export default function CotizacionDetalle() {
                   <p>#{cotizacion.troquel_id}</p>
                 </div>
               )}
-
 
               {cotizacion.corte && (
                 <div>
@@ -351,85 +360,118 @@ export default function CotizacionDetalle() {
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Historial de Versiones</CardTitle>
-              <CardDescription>
-                {historialVersiones.length} versión{historialVersiones.length !== 1 ? 'es' : ''} de este SKU
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {historialVersiones.map((version) => (
-                  <div
-                    key={version.id}
-                    className={`p-3 rounded-lg border transition-colors ${
-                      version.id === cotizacion.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-medium text-sm">
-                          {format(new Date(version.fecha_cotizacion), 'dd/MM/yyyy', { locale: es })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(version.created_at), 'HH:mm', { locale: es })}
-                        </p>
-                      </div>
-                      <Badge variant={version.id === cotizacion.id ? 'default' : 'secondary'} className="text-xs">
-                        {version.id === cotizacion.id ? 'Actual' : 'Anterior'}
-                      </Badge>
-                    </div>
-                    
-                    <p className="font-bold text-primary text-sm mb-2">
-                      {formatPrice(version.precio_unitario)}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => {
-                          setSelectedVersion(version);
-                          setShowVersionModal(true);
-                        }}
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Ver
-                      </Button>
-                      {version.documento_pdf && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                          onClick={() => handleDownloadPDF(version.documento_pdf!)}
-                        >
-                          <Download className="h-3 w-3 mr-1" />
-                          PDF
-                        </Button>
-                      )}
-                      {version.id !== cotizacion.id && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                          onClick={() => handleCopiarCotizacion(version)}
-                        >
-                          <Copy className="h-3 w-3 mr-1" />
-                          Copiar
-                        </Button>
-                      )}
-                    </div>
+      {/* Línea de tiempo interactiva */}
+      <div className="w-80 border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="sticky top-0 p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            <h2 className="font-semibold">Línea de Tiempo</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {historialVersiones.length} versión{historialVersiones.length !== 1 ? 'es' : ''}
+          </p>
+        </div>
+        
+        <div className="p-4 space-y-1">
+          {historialVersiones.map((version, index) => (
+            <div
+              key={version.id}
+              className={`relative pl-8 pb-6 ${index === historialVersiones.length - 1 ? 'pb-0' : ''}`}
+            >
+              {/* Línea vertical */}
+              {index !== historialVersiones.length - 1 && (
+                <div className="absolute left-3 top-6 w-px h-full bg-border" />
+              )}
+              
+              {/* Punto de la línea de tiempo */}
+              <div
+                className={`absolute left-1 top-1 w-4 h-4 rounded-full border-2 ${
+                  version.id === cotizacion.id
+                    ? 'bg-primary border-primary shadow-lg shadow-primary/50'
+                    : 'bg-background border-border hover:border-primary/50'
+                } transition-all duration-200`}
+              />
+              
+              {/* Contenido */}
+              <div
+                className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+                  version.id === cotizacion.id
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                }`}
+                onClick={() => {
+                  setSelectedVersion(version);
+                  setShowVersionModal(true);
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs font-medium">
+                      {format(new Date(version.fecha_cotizacion), 'dd/MM/yyyy', { locale: es })}
+                    </span>
                   </div>
-                ))}
+                  <Badge 
+                    variant={version.id === cotizacion.id ? 'default' : 'secondary'} 
+                    className="text-xs h-5"
+                  >
+                    {version.id === cotizacion.id ? 'Actual' : 'V' + (historialVersiones.length - index)}
+                  </Badge>
+                </div>
+                
+                <p className="font-bold text-primary text-sm mb-2">
+                  {formatPrice(version.precio_unitario)}
+                </p>
+                
+                <p className="text-xs text-muted-foreground mb-2">
+                  Cantidad: {version.cantidad_cotizada.toLocaleString()} und
+                </p>
+                
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVersion(version);
+                      setShowVersionModal(true);
+                    }}
+                  >
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                  {version.documento_pdf && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadPDF(version.documento_pdf!);
+                      }}
+                    >
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {version.id !== cotizacion.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopiarCotizacion(version);
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -470,7 +512,6 @@ export default function CotizacionDetalle() {
                   <p>#{selectedVersion.troquel_id}</p>
                 </div>
               )}
-
 
               {selectedVersion.corte && (
                 <div>
