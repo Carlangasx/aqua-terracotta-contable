@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Save, Package, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Package, Trash2, RefreshCw } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -50,6 +50,9 @@ interface Cotizacion {
   observaciones?: string;
   tipo_empaque?: string;
   industria?: string;
+  corte?: string;
+  tamaños_por_corte?: string;
+  tamaños_por_pliego?: string;
 }
 
 export default function EditarCotizacion() {
@@ -77,7 +80,10 @@ export default function EditarCotizacion() {
     alto_mm: '',
     profundidad_mm: '',
     observaciones: '',
-    fecha_cotizacion: ''
+    fecha_cotizacion: '',
+    corte: '',
+    tamaños_por_corte: '',
+    tamaños_por_pliego: ''
   });
 
   useEffect(() => {
@@ -127,7 +133,10 @@ export default function EditarCotizacion() {
         alto_mm: medidas?.alto_mm?.toString() || '',
         profundidad_mm: medidas?.profundidad_mm?.toString() || '',
         observaciones: data.observaciones || '',
-        fecha_cotizacion: data.fecha_cotizacion || ''
+        fecha_cotizacion: data.fecha_cotizacion || '',
+        corte: data.corte || '',
+        tamaños_por_corte: data.tamaños_por_corte || '',
+        tamaños_por_pliego: data.tamaños_por_pliego || ''
       });
 
     } catch (error) {
@@ -220,7 +229,10 @@ export default function EditarCotizacion() {
           profundidad_mm: parseFloat(formData.profundidad_mm)
         },
         observaciones: formData.observaciones || null,
-        fecha_cotizacion: formData.fecha_cotizacion
+        fecha_cotizacion: formData.fecha_cotizacion,
+        corte: formData.corte || null,
+        tamaños_por_corte: formData.tamaños_por_corte || null,
+        tamaños_por_pliego: formData.tamaños_por_pliego || null
       };
 
       const { error } = await supabase
@@ -281,6 +293,18 @@ export default function EditarCotizacion() {
     }
   };
 
+  const handleActualizarCotizacion = () => {
+    navigate('/cotizaciones/nueva', { 
+      state: { 
+        cotizacionBase: {
+          ...formData,
+          sku: '', // Limpiar SKU para que se genere uno nuevo
+          fecha_cotizacion: new Date().toISOString().split('T')[0] // Fecha actual
+        }
+      }
+    });
+  };
+
   if (loadingData) {
     return (
       <MainLayout>
@@ -326,7 +350,17 @@ export default function EditarCotizacion() {
             </div>
           </div>
           
-          <AlertDialog>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleActualizarCotizacion}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Actualizar Cotización
+            </Button>
+            
+            <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" disabled={deleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -352,6 +386,7 @@ export default function EditarCotizacion() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -498,7 +533,43 @@ export default function EditarCotizacion() {
                 </div>
               </div>
 
-              {/* Cuarta fila - Medidas */}
+              {/* Cuarta fila - Información de Corte */}
+              <div>
+                <Label className="text-base font-semibold">Información de Corte</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="corte">Corte</Label>
+                    <Input
+                      id="corte"
+                      value={formData.corte}
+                      onChange={(e) => handleInputChange('corte', e.target.value)}
+                      placeholder="Ej: Guillotina, Láser, Manual"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tamaños_por_corte">Tamaños por Corte</Label>
+                    <Input
+                      id="tamaños_por_corte"
+                      value={formData.tamaños_por_corte}
+                      onChange={(e) => handleInputChange('tamaños_por_corte', e.target.value)}
+                      placeholder="Ej: 4x2, 6x3"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tamaños_por_pliego">Tamaños por Pliego</Label>
+                    <Input
+                      id="tamaños_por_pliego"
+                      value={formData.tamaños_por_pliego}
+                      onChange={(e) => handleInputChange('tamaños_por_pliego', e.target.value)}
+                      placeholder="Ej: 8x4, 12x6"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Quinta fila - Medidas */}
               <div>
                 <Label className="text-base font-semibold">Medidas de la Caja (mm) *</Label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
