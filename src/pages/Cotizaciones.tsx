@@ -322,6 +322,27 @@ export default function Cotizaciones() {
                     </span>
                   </div>
 
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Corte:</span>
+                    <span className="text-sm text-foreground">
+                      {cotizacion.corte || '-'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Tamaños por corte:</span>
+                    <span className="text-sm text-foreground">
+                      {cotizacion.tamaños_por_corte || '-'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Tamaños por pliego:</span>
+                    <span className="text-sm text-foreground">
+                      {cotizacion.tamaños_por_pliego || '-'}
+                    </span>
+                  </div>
+
                   <div className="flex flex-wrap gap-2 pt-2">
                     {cotizacion.tipo_empaque && (
                       <Badge variant="secondary" className="text-xs">
